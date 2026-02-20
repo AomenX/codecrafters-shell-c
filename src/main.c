@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     if (if_builtin(input)) {
       if (strcmp(input, "exit") == 0) {
         cmd_exit(input); // execute the builtin exit
-      } else if (strncmp(input, "echo", 5) == 0) {
+      } else if (strncmp(input, "echo", 4) == 0) {
         cmd_echo(input);
       }
     } else { // print error message
