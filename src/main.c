@@ -17,14 +17,8 @@ int main(int argc, char *argv[]) {
     // remove trailing newline
     input[strcspn(input, "\n")] = 0;
 
-    // check the input if it's a builtin
-    if (if_builtin(input)) {
-      if (strcmp(input, "exit") == 0) {
-        cmd_exit(input); // execute the builtin exit
-      } else if (strncmp(input, "echo", 4) == 0) {
-        cmd_echo(input);
-      }
-    } else { // print error message
+    // Try to execute as a builtin, otherwise print error
+    if (!exec_builtin(input)) {
       printf("%s: command not found\n", input);
     }
   }

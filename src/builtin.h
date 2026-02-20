@@ -1,7 +1,8 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
-int if_builtin(char *input);
-int cmd_exit(char *input);
-void cmd_echo(char *input);
+// Checks if input is a builtin command and executes it.
+// Returns 1 if handled, 0 otherwise.
+int exec_builtin(char *input);
+
 #endif
