@@ -17,10 +17,11 @@ int if_builtin(char *input) {
   // Check against known builtins
   if (strcmp(cmd, "exit") == 0)
     return 1;
-
+  if (strcmp(cmd, "echo") == 0)
+    return 1;
   return 0; // Not a builtin
 }
-
+// ========== exit builtin ==========
 int cmd_exit(char *input) {
   int code = 0;
   // If there's an argument after "exit ", parse it as the exit code
@@ -29,4 +30,9 @@ int cmd_exit(char *input) {
   }
   exit(code);
   return code; // Never reached, but keeps the compiler happy
+}
+// ========== echo builtin ==========
+void cmd_echo(char *input) {
+  char *arg = input + 5;
+  printf("%s\n", arg);
 }

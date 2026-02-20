@@ -16,11 +16,15 @@ int main(int argc, char *argv[]) {
     fgets(input, sizeof(input), stdin);
     // remove trailing newline
     input[strcspn(input, "\n")] = 0;
+
     // check the input if it's a builtin
     if (if_builtin(input)) {
-      cmd_exit(input); // execute the builtin exit
-    } else {
-      // print error message
+      if (strcmp(input, "exit") == 0) {
+        cmd_exit(input); // execute the builtin exit
+      } else if (strcmp(input, "echo") == 0) {
+        cmd_echo(input);
+      }
+    } else { // print error message
       printf("%s: command not found\n", input);
     }
   }
