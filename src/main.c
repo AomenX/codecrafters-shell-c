@@ -5,12 +5,13 @@
 int main(int argc, char *argv[]) {
   // Flush after every printf
   fflush(stdout);
-
-  // display prompt
-  printf("$ ");
-
   char input[1024];
+
+  // REPL
   while (1) {
+    // display prompt
+    printf("$ ");
+
     // read input
     fgets(input, sizeof(input), stdin);
 
