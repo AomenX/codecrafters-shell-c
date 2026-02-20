@@ -10,14 +10,15 @@ int main(int argc, char *argv[]) {
   printf("$ ");
 
   char input[1024];
-  // read input
-  fgets(input, sizeof(input), stdin);
+  while (1) {
+    // read input
+    fgets(input, sizeof(input), stdin);
 
-  // remove trailing newline
-  input[strcspn(input, "\n")] = 0;
+    // remove trailing newline
+    input[strcspn(input, "\n")] = 0;
 
-  // print error message
-  printf("%s: command not found\n", input);
-
+    // print error message
+    printf("%s: command not found\n", input);
+  }
   return 0;
 }
