@@ -60,7 +60,7 @@ static void cmd_type(char *input) {
   int i;
 
   for (i = 0; i < sizeof(builtins_names) / sizeof(builtins_names[0]); i++) {
-    if (strcmp(arg, builtins_names[i]) != 0) {
+    if (strcmp(arg, builtins_names[i]) == 0) {
       printf("%s is a shell builtin\n", arg);
       return;
     } else {
