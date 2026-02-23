@@ -63,9 +63,7 @@ static void cmd_type(char *input) {
     if (strcmp(arg, builtins_names[i]) == 0) {
       printf("%s is a shell builtin\n", arg);
       return;
-    } else {
-      printf("%s: not found\n", arg);
-      return;
     }
   }
+  printf("%s: not found\n", arg);
 }
