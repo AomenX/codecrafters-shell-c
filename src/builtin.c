@@ -1,7 +1,9 @@
 #include "builtin.h"
+#include "path.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 // Forward declarations (defined below)
 static int cmd_exit(char *input);
@@ -64,6 +66,12 @@ static void cmd_type(char *input) {
       printf("%s is a shell builtin\n", arg);
       return;
     }
+  }
+  char *path = find_in_path(arg);
+  if (path != NULL) {
+    printf("%s is %s\n", arg, path);
+    free(path);
+    return;
   }
   printf("%s: not found\n", arg);
 }
