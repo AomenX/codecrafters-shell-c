@@ -9,9 +9,10 @@
 static int cmd_exit(char *input);
 static void cmd_echo(char *input);
 static void cmd_type(char *input);
+static void cmd_pwd(char *input);
 
 // All builtin names — used by cmd_type to identify builtins
-static const char *builtins_names[] = {"exit", "echo", "type"};
+static const char *builtins_names[] = {"exit", "echo", "type", "pwd"};
 
 // Checks if the command is a builtin, and if so, executes it.
 // Returns 1 if handled, 0 otherwise.
@@ -35,6 +36,9 @@ int exec_builtin(char *input) {
   } else if (strcmp(cmd, "type") == 0) {
     cmd_type(input);
     return 1;
+  } else if (strcmp(cmd, "pwd") == 0) {
+    cmd_pwd(input);
+    return 1;
   }
   return 0; // Not a builtin
 }
@@ -54,6 +58,7 @@ static int cmd_exit(char *input) {
 static void cmd_echo(char *input) {
   if (input[4] == '\0') {
     printf("\n");
+    return;
   }
   printf("%s\n", input + 5);
 }
@@ -82,4 +87,14 @@ static void cmd_type(char *input) {
 
   // 3. Not found anywhere
   printf("%s: not found\n", arg);
+}
+
+// ========== pwd builtin ==========
+static void cmd_pwd(char *input) {
+  char *path = getcwd(NULL, 0);
+  if (path != NULL) {
+    printf("%s\n", path);
+    free(path);
+    return;
+  }
 }
