@@ -7,7 +7,8 @@
 
 int main(int argc, char *argv[]) {
   char input[1024];
-  // REPL
+
+  // REPL: Read-Eval-Print Loop
   while (1) {
     // Flush after every printf
     fflush(stdout);
@@ -18,7 +19,7 @@ int main(int argc, char *argv[]) {
     // remove trailing newline
     input[strcspn(input, "\n")] = 0;
 
-    // Try to execute as a builtin, then external command, otherwise print error
+    // Dispatch: builtin → external → not found
     if (exec_builtin(input)) {
       continue;
     } else if (exec_external(input)) {

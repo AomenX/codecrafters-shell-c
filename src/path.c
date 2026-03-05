@@ -11,13 +11,14 @@ char *find_in_path(const char *cmd) {
   if (path == NULL) {
     return NULL;
   }
-  // make a copy (strtok modifies the string!)
+
+  // strdup because strtok modifies the string, and getenv's result must not be
+  // modified
   char *path_copy = strdup(path);
-  // split by ":" to get each directory
   char *dir = strtok(path_copy, ":");
 
+  // Search each PATH directory for an executable matching cmd
   while (dir != NULL) {
-    // build full path: "<dir>/<cmd>"
     snprintf(full_path, sizeof(full_path), "%s/%s", dir, cmd);
     // check if executable exists
     // If found: free the copy, return strdup(full_path)
@@ -28,7 +29,7 @@ char *find_in_path(const char *cmd) {
     }
     dir = strtok(NULL, ":");
   }
-  // free the copy, return NULL (not found)
+
   free(path_copy);
   return NULL;
 }

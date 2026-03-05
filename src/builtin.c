@@ -10,7 +10,7 @@ static int cmd_exit(char *input);
 static void cmd_echo(char *input);
 static void cmd_type(char *input);
 
-// list of builtins names
+// All builtin names — used by cmd_type to identify builtins
 static const char *builtins_names[] = {"exit", "echo", "type"};
 
 // Checks if the command is a builtin, and if so, executes it.
@@ -57,21 +57,27 @@ static void cmd_echo(char *input) {
 }
 
 // ========== type builtin ==========
+// Identifies a command as: builtin → external (in PATH) → not found
 static void cmd_type(char *input) {
   char *arg = input + 5;
   int i;
 
+  // 1. Check if it's a builtin
   for (i = 0; i < sizeof(builtins_names) / sizeof(builtins_names[0]); i++) {
     if (strcmp(arg, builtins_names[i]) == 0) {
       printf("%s is a shell builtin\n", arg);
       return;
     }
   }
+
+  // 2. Search PATH for an external executable
   char *path = find_in_path(arg);
   if (path != NULL) {
     printf("%s is %s\n", arg, path);
     free(path);
     return;
   }
+
+  // 3. Not found anywhere
   printf("%s: not found\n", arg);
 }
