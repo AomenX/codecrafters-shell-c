@@ -7,16 +7,18 @@
 #include <unistd.h>
 
 int exec_external(char *input) {
-  char *args[1024];
+  char *input_copy = strdup(input);
+  char *argv[64];
   int i = 0;
-  while (input != NULL) {
-    args[i] = strtok(input, " ");
-    input = strtok(NULL, " ");
+
+  argv[0] = strtok(input_copy, " ");
+  while (argv[i] != NULL) {
     i++;
+    argv[i] = strtok(NULL, " ");
   }
-  char *path = find_in_path(args[0]);
+  char *path = find_in_path(argv[0]);
   if (path == NULL) {
-    free(args);
+    free(input_copy);
     return 0;
   }
 
@@ -25,17 +27,18 @@ int exec_external(char *input) {
   if (pid < 0) {
     perror("fork failed");
     free(path);
-    free(args);
+    free(input_copy);
     return 0;
   } else if (pid == 0) {
-    execvp(args[0], args);
+    execvp(argv[0], argv);
+    perror("execvp failed");
     free(path);
-    free(args);
-    return 0;
+    free(input_copy);
+    exit(1);
   } else {
     waitpid(pid, NULL, 0);
     free(path);
-    free(args);
+    free(input_copy);
     return 1;
   }
 }

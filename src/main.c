@@ -18,11 +18,13 @@ int main(int argc, char *argv[]) {
     // remove trailing newline
     input[strcspn(input, "\n")] = 0;
 
-    // Try to execute as a builtin, otherwise print error
-    if (!exec_builtin(input)) {
-      printf("%s: command not found\n", input);
+    // Try to execute as a builtin, then external command, otherwise print error
+    if (exec_builtin(input)) {
+      continue;
+    } else if (exec_external(input)) {
+      continue;
     } else {
-      exec_external(input);
+      printf("%s: command not found\n", input);
     }
   }
   return 0;
