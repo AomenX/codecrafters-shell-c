@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "builtin.h"
+#include "exec.h"
 
 int main(int argc, char *argv[]) {
   char input[1024];
@@ -20,6 +21,8 @@ int main(int argc, char *argv[]) {
     // Try to execute as a builtin, otherwise print error
     if (!exec_builtin(input)) {
       printf("%s: command not found\n", input);
+    } else {
+      exec_external(input);
     }
   }
   return 0;
