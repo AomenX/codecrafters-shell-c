@@ -52,8 +52,10 @@ static int cmd_exit(char *input) {
 
 // ========== echo builtin ==========
 static void cmd_echo(char *input) {
-  char *arg = input + 5;
-  printf("%s\n", arg);
+  if (input[4] == '\0') {
+    printf("\n");
+  }
+  printf("%s\n", input + 5);
 }
 
 // ========== type builtin ==========

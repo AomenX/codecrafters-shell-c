@@ -26,25 +26,25 @@ int exec_external(char *input) {
     return 0;
   }
 
-  // Fork a child process to run the external program
-  pid_t pid = fork();
-  if (pid < 0) {
-    perror("fork failed");
+  while (1) {
+
+    // Fork a child process to run the external program
+    pid_t pid = fork();
+    if (pid < 0) {
+      perror("fork failed");
+      return 0;
+    } else if (pid == 0) {
+      // Child: replace this process with the external program
+      // execvp only returns if it fails
+      execvp(argv[0], argv);
+      perror("This won't be printed if execvp is successul");
+      exit(1);
+    } else {
+      // Parent: wait for child to finish before returning to the REPL
+      waitpid(pid, NULL, 0);
+    }
     free(path);
     free(input_copy);
-    return 0;
-  } else if (pid == 0) {
-    // Child: replace this process with the external program
-    // execvp only returns if it fails
-    execvp(argv[0], argv);
-    perror("execvp failed");
-    free(path);
-    free(input_copy);
-    exit(1);
+    return 1;
   }
-  // Parent: wait for child to finish before returning to the REPL
-  waitpid(pid, NULL, 0);
-  free(path);
-  free(input_copy);
-  return 1;
 }
