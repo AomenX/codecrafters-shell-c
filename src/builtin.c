@@ -10,9 +10,10 @@ static int cmd_exit(char *input);
 static void cmd_echo(char *input);
 static void cmd_type(char *input);
 static void cmd_pwd(char *input);
+static int cmd_cd(char *input);
 
 // All builtin names — used by cmd_type to identify builtins
-static const char *builtins_names[] = {"exit", "echo", "type", "pwd"};
+static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd"};
 
 // Checks if the command is a builtin, and if so, executes it.
 // Returns 1 if handled, 0 otherwise.
@@ -39,8 +40,30 @@ int exec_builtin(char *input) {
   } else if (strcmp(cmd, "pwd") == 0) {
     cmd_pwd(input);
     return 1;
+  } else if (strcmp(cmd, "cd") == 0) {
+    cmd_cd(input);
+    return 1;
   }
   return 0; // Not a builtin
+}
+
+// ========== cd builtin ==========
+static int cmd_cd(char *input) {
+  char cwd[1024];
+  char *path = input[1];
+
+  if (getcwd(cwd, sizeof(cwd)))
+    setenv("OLDPWD", cwd, 1);
+
+  if (chdir(path) == -1) {
+    perror("cd: %s: No such file or directory/n", path);
+    return -1;
+  }
+
+  if (getcwd(cwd, sizeof(cwd)))
+    setenv("PWD", cwd, 1);
+
+  return 0;
 }
 
 // ========== exit builtin ==========
@@ -91,6 +114,7 @@ static void cmd_type(char *input) {
 
 // ========== pwd builtin ==========
 static void cmd_pwd(char *input) {
+  // getcwd(NULL, 0) let the sys allocates the buufer auto
   char *path = getcwd(NULL, 0);
   if (path != NULL) {
     printf("%s\n", path);
