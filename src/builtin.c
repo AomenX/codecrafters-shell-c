@@ -52,6 +52,10 @@ static int cmd_cd(char *input) {
   char cwd[1024];
   char *path = input + 3;
 
+  if (strcmp(path, "~") == 0 || strcmp(path, "") == 0) {
+    path = getenv("HOME");
+  }
+  // save old path
   if (getcwd(cwd, sizeof(cwd)))
     setenv("OLDPWD", cwd, 1);
 
@@ -59,7 +63,7 @@ static int cmd_cd(char *input) {
     fprintf(stderr, "cd: %s: No such file or directory\n", path);
     return -1;
   }
-
+  // save new path
   if (getcwd(cwd, sizeof(cwd)))
     setenv("PWD", cwd, 1);
 
