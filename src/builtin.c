@@ -50,13 +50,13 @@ int exec_builtin(char *input) {
 // ========== cd builtin ==========
 static int cmd_cd(char *input) {
   char cwd[1024];
-  char *path = input[1];
+  char *path = input + 3;
 
   if (getcwd(cwd, sizeof(cwd)))
     setenv("OLDPWD", cwd, 1);
 
   if (chdir(path) == -1) {
-    perror("cd: %s: No such file or directory/n", path);
+    fprintf(stderr, "cd: %s: No such file or directory\n", path);
     return -1;
   }
 
