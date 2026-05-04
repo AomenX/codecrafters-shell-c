@@ -6,51 +6,46 @@
 #include <unistd.h>
 
 // Forward declarations (defined below)
-static int cmd_exit(char *input);
-static void cmd_echo(char *input);
-static void cmd_type(char *input);
-static void cmd_pwd(char *input);
-static int cmd_cd(char *input);
+static int cmd_exit(int argc, char **argv);
+static void cmd_echo(int argc, char **argv);
+static void cmd_type(int argc, char **argv);
+static void cmd_pwd(void);
+static int cmd_cd(int argc, char **argv);
 
 // All builtin names — used by cmd_type to identify builtins
 static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd"};
 
-// Checks if the command is a builtin, and if so, executes it.
+// Checks if argv[0] is a builtin, and if so, executes it.
 // Returns 1 if handled, 0 otherwise.
-int exec_builtin(char *input) {
-  // Extract the command name (first word before any space)
-  char cmd[256];
-  int i = 0;
-  while (input[i] != '\0' && input[i] != ' ' && i < 255) {
-    cmd[i] = input[i];
-    i++;
-  }
-  cmd[i] = '\0';
+int exec_builtin(int argc, char **argv) {
+  if (argc == 0)
+    return 0;
 
-  // Check and dispatch to the correct builtin
+  const char *cmd = argv[0];
+
   if (strcmp(cmd, "exit") == 0) {
-    cmd_exit(input);
+    cmd_exit(argc, argv);
     return 1;
   } else if (strcmp(cmd, "echo") == 0) {
-    cmd_echo(input);
+    cmd_echo(argc, argv);
     return 1;
   } else if (strcmp(cmd, "type") == 0) {
-    cmd_type(input);
+    cmd_type(argc, argv);
     return 1;
   } else if (strcmp(cmd, "pwd") == 0) {
-    cmd_pwd(input);
+    cmd_pwd();
     return 1;
   } else if (strcmp(cmd, "cd") == 0) {
-    cmd_cd(input);
+    cmd_cd(argc, argv);
     return 1;
   }
   return 0; // Not a builtin
 }
 
 // ========== cd builtin ==========
-static int cmd_cd(char *input) {
+static int cmd_cd(int argc, char **argv) {
   char cwd[1024];
-  char *path = input + 3;
+  const char *path = (argc > 1) ? argv[1] : "";
 
   if (strcmp(path, "~") == 0 || strcmp(path, "") == 0) {
     path = getenv("HOME");
@@ -71,33 +66,36 @@ static int cmd_cd(char *input) {
 }
 
 // ========== exit builtin ==========
-static int cmd_exit(char *input) {
+static int cmd_exit(int argc, char **argv) {
   int code = 0;
-  // If there's an argument after "exit ", parse it as the exit code
-  if (input[4] == ' ') {
-    code = atoi(input + 5);
+  if (argc > 1) {
+    code = atoi(argv[1]);
   }
   exit(code);
   return code; // Never reached, but keeps the compiler happy
 }
 
 // ========== echo builtin ==========
-static void cmd_echo(char *input) {
-  if (input[4] == '\0') {
-    printf("\n");
-    return;
+static void cmd_echo(int argc, char **argv) {
+  for (int i = 1; i < argc; i++) {
+    if (i > 1)
+      printf(" ");
+    printf("%s", argv[i]);
   }
-  printf("%s\n", input + 5);
+  printf("\n");
 }
 
 // ========== type builtin ==========
 // Identifies a command as: builtin → external (in PATH) → not found
-static void cmd_type(char *input) {
-  char *arg = input + 5;
-  int i;
+static void cmd_type(int argc, char **argv) {
+  if (argc < 2) {
+    return;
+  }
+  const char *arg = argv[1];
 
   // 1. Check if it's a builtin
-  for (i = 0; i < sizeof(builtins_names) / sizeof(builtins_names[0]); i++) {
+  for (int i = 0; i < (int)(sizeof(builtins_names) / sizeof(builtins_names[0]));
+       i++) {
     if (strcmp(arg, builtins_names[i]) == 0) {
       printf("%s is a shell builtin\n", arg);
       return;
@@ -117,12 +115,10 @@ static void cmd_type(char *input) {
 }
 
 // ========== pwd builtin ==========
-static void cmd_pwd(char *input) {
-  // getcwd(NULL, 0) let the sys allocates the buufer auto
+static void cmd_pwd(void) {
   char *path = getcwd(NULL, 0);
   if (path != NULL) {
     printf("%s\n", path);
     free(path);
-    return;
   }
 }
