@@ -12,6 +12,12 @@ int parse_input(char *input, char **argv) {
   for (int i = 0; input[i] != '\0'; i++) {
     char c = input[i];
 
+    if (c == '\\' && !in_single_quotes && !in_double_quotes) {
+      i++;
+      buf[buf_pos++] = input[i];
+      continue;
+    }
+
     if (c == '\'' && !in_double_quotes) {
       in_single_quotes = !in_single_quotes;
       continue; // don't add quote char to buffer
