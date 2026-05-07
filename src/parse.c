@@ -18,6 +18,15 @@ int parse_input(char *input, char **argv) {
       continue;
     }
 
+    if (c == '\\' && in_double_quotes) {
+      if (input[i + 1] == '"' || input[i + 1] == '\\' || input[i + 1] == '$' ||
+          input[i + 1] == '`') {
+        buf[buf_pos++] = input[i + 1];
+        i++;
+        continue;
+      }
+    }
+
     if (c == '\'' && !in_double_quotes) {
       in_single_quotes = !in_single_quotes;
       continue; // don't add quote char to buffer
