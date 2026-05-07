@@ -7,16 +7,22 @@ int parse_input(char *input, char **argv) {
   char buf[1024];
   int buf_pos = 0;
   int in_single_quotes = 0;
+  int in_double_quotes = 0;
 
   for (int i = 0; input[i] != '\0'; i++) {
     char c = input[i];
 
-    if (c == '\'') {
+    if (c == '\'' && !in_double_quotes) {
       in_single_quotes = !in_single_quotes;
       continue; // don't add quote char to buffer
     }
 
-    if (c == ' ' && !in_single_quotes) {
+    if (c == '"' && !in_single_quotes) {
+      in_double_quotes = !in_double_quotes;
+      continue; // don't add quote char to buffer
+    }
+
+    if (c == ' ' && !in_single_quotes && !in_double_quotes) {
       // space outside quotes → delimiter
       if (buf_pos > 0) {
         buf[buf_pos] = '\0';
