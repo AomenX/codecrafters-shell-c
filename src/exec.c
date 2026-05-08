@@ -7,8 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int exec_external(int argc, char **argv, const char *redirect_file,
-                  int target_fd, int append) {
+int exec_external(int argc, char **argv, const char *redirect_file) {
   if (argc == 0)
     return 0;
 
@@ -27,18 +26,12 @@ int exec_external(int argc, char **argv, const char *redirect_file,
   } else if (pid == 0) {
     // Child: apply redirect if requested
     if (redirect_file != NULL) {
-      int flags = O_WRONLY | O_CREAT;
-      if (append) {
-        flags |= O_APPEND;
-      } else {
-        flags |= O_TRUNC;
-      }
-      int fd = open(redirect_file, flags, 0644);
+      int fd = open(redirect_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (fd == -1) {
         perror("open failed");
         exit(1);
       }
-      dup2(fd, target_fd);
+      dup2(fd, STDOUT_FILENO);
       close(fd);
     }
     // Replace this process with the external program
