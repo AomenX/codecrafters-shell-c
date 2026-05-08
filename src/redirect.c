@@ -12,6 +12,18 @@ int extract_redirect(int argc, char **argv, char **redirect_file) {
       *redirect_file = argv[i + 1];
       argv[i] = NULL;
       return i;
+    } else if (strcmp(argv[i], "2>") == 0) {
+      *redirect_file = argv[i + 1];
+      argv[i] = NULL;
+      return i;
+    } else if (strcmp(argv[i], "2>>") == 0) {
+      *redirect_file = argv[i + 1];
+      argv[i] = NULL;
+      return i;
+    } else if (strcmp(argv[i], ">>") == 0) {
+      *redirect_file = argv[i + 1];
+      argv[i] = NULL;
+      return i;
     }
   }
   *redirect_file = NULL;
@@ -27,12 +39,12 @@ int apply_redirect(const char *redirect_file) {
     perror("open failed");
     return -1;
   }
-  int saved_fd = dup(STDOUT_FILENO);
+  int saved_fd = dup(*redirect_file);
   if (saved_fd == -1) {
     perror("dup failed");
     return -1;
   }
-  if (dup2(fd, STDOUT_FILENO) == -1) {
+  if (dup2(fd, *redirect_file) == -1) {
     perror("dup2 failed");
     return -1;
   }
