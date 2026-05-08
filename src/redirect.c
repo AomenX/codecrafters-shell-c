@@ -8,7 +8,9 @@
 int extract_redirect(int argc, char **argv, char **redirect_file) {
   // TODO: loop through argv, find ">", extract filename, shorten argv
   for (int i = 0; i < argc; i++) {
-    if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0) {
+    if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0 ||
+        strcmp(argv[i], "2>") == 0 || strcmp(argv[i], "2>>") == 0 ||
+        strcmp(argv[i], ">>") == 0) {
       *redirect_file = argv[i + 1];
       argv[i] = NULL;
       return i;
@@ -27,12 +29,12 @@ int apply_redirect(const char *redirect_file) {
     perror("open failed");
     return -1;
   }
-  int saved_fd = dup(STDOUT_FILENO);
+  int saved_fd = dup(STDOUT_FILENO || STDERR_FILENO);
   if (saved_fd == -1) {
     perror("dup failed");
     return -1;
   }
-  if (dup2(fd, STDOUT_FILENO) == -1) {
+  if (dup2(fd, STDOUT_FILENO || STDERR_FILENO) == -1) {
     perror("dup2 failed");
     return -1;
   }
@@ -44,7 +46,7 @@ void restore_redirect(int saved_fd) {
   // TODO: dup2 saved_fd back to stdout, close saved_fd
   if (saved_fd == -1)
     return;
-  if (dup2(saved_fd, STDOUT_FILENO) == -1) {
+  if (dup2(saved_fd, STDOUT_FILENO || STDERR_FILENO) == -1) {
     perror("dup2 failed");
     return;
   }
