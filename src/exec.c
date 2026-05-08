@@ -12,7 +12,6 @@ int exec_external(int argc, char **argv, const char *redirect_file) {
 
   char *path = find_in_path(argv[0]);
   if (path == NULL) {
-    printf("%s: command not found\n", argv[0]);
     return 0;
   }
 
