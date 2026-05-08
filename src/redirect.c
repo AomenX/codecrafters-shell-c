@@ -5,13 +5,13 @@
 #include <string.h>
 #include <unistd.h>
 
-// Helper structure to pass redirection details
 typedef struct {
-  int target_fd; // 1 for stdout, 2 for stderr
-  int flags;     // O_TRUNC or O_APPEND
+  int target_fd;
+  int flags;
 } RedirectConfig;
 
-RedirectConfig current_config;
+// Global configuration to track the latest redirection parsed
+static RedirectConfig current_config;
 
 int extract_redirect(int argc, char **argv, char **redirect_file) {
   for (int i = 0; i < argc; i++) {
@@ -33,13 +33,16 @@ int extract_redirect(int argc, char **argv, char **redirect_file) {
     }
 
     if (target_fd != -1) {
-      *redirect_file = argv[i + 1];
-      current_config.target_fd = target_fd;
-      current_config.flags = flags;
+      // Safety check: ensure filename exists
+      if (i + 1 < argc) {
+        *redirect_file = argv[i + 1];
+        current_config.target_fd = target_fd;
+        current_config.flags = flags;
 
-      // Shorten argv by setting the operator and filename to NULL
-      argv[i] = NULL;
-      return i;
+        // Cut the argv array at the operator
+        argv[i] = NULL;
+        return i;
+      }
     }
   }
   *redirect_file = NULL;
@@ -50,22 +53,16 @@ int apply_redirect(const char *redirect_file) {
   if (redirect_file == NULL)
     return -1;
 
-  // Use the flags determined during extraction
   int fd = open(redirect_file, current_config.flags, 0644);
   if (fd == -1) {
     perror("open failed");
     return -1;
   }
 
-  // Save the original FD (either 1 or 2) so we can restore it later
+  // Save the original FD (1 or 2)
   int saved_fd = dup(current_config.target_fd);
-  if (saved_fd == -1) {
-    perror("dup failed");
-    close(fd);
-    return -1;
-  }
 
-  // Redirect the target FD to our file
+  // Redirect target FD to our file
   if (dup2(fd, current_config.target_fd) == -1) {
     perror("dup2 failed");
     close(fd);
@@ -79,10 +76,6 @@ int apply_redirect(const char *redirect_file) {
 void restore_redirect(int saved_fd) {
   if (saved_fd == -1)
     return;
-
-  // Restore the saved FD back to its original target (stdout or stderr)
-  if (dup2(saved_fd, current_config.target_fd) == -1) {
-    perror("dup2 restore failed");
-  }
+  dup2(saved_fd, current_config.target_fd);
   close(saved_fd);
 }

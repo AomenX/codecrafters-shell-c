@@ -1,22 +1,22 @@
 #ifndef REDIRECT_H
 #define REDIRECT_H
 
-// Scans argv for ">" operator. If found:
-//   - Sets *redirect_file to the filename (the token after ">")
-//   - Removes ">" and the filename from argv
-//   - Returns the new argc
-// If not found, sets *redirect_file to NULL and returns argc unchanged.
+/**
+ * Parses argv for redirection operators (>, >>, 2>, 2>>).
+ * Sets redirect_file to the target filename and modifies argv to "cut" the
+ * command. Returns the new argc (index of the NULL terminator).
+ */
 int extract_redirect(int argc, char **argv, char **redirect_file);
 
-// Opens redirect_file for writing and redirects stdout to it.
-// Returns the saved stdout fd (for later restore), or -1 if redirect_file is
-// NULL.
+/**
+ * Opens the redirect_file and redirects the target FD (stdout or stderr).
+ * Returns a "saved" FD that can be used to restore the original state.
+ */
 int apply_redirect(const char *redirect_file);
 
-// Restores stdout from a previously saved fd.
-// Pass the value returned by apply_redirect.
+/**
+ * Restores the original FD using the saved FD.
+ */
 void restore_redirect(int saved_fd);
 
 #endif
-extern int redirect_target_fd;
-extern int redirect_flags;
