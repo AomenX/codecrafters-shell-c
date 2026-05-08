@@ -39,12 +39,17 @@ int apply_redirect(const char *redirect_file) {
     perror("open failed");
     return -1;
   }
-  int saved_fd = dup(*redirect_file);
+
+  int target_fd =
+      (strcmp(*redirect_file, "2>") == 0 || strcmp(*redirect_file, "2>>") == 0)
+          ? STDERR_FILENO
+          : STDOUT_FILENO;
+  int saved_fd = dup(target_fd);
   if (saved_fd == -1) {
     perror("dup failed");
     return -1;
   }
-  if (dup2(fd, *redirect_file) == -1) {
+  if (dup2(fd, target_fd) == -1) {
     perror("dup2 failed");
     return -1;
   }
