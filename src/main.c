@@ -31,25 +31,27 @@ int main(int argc_unused, char *argv_unused[]) {
     if (argc == 0)
       continue;
 
-    // Extract redirect (e.g., "> output.txt") from argv
+    // Extract redirect (e.g., "> output.txt", "2> error.txt") from argv
     char *redirect_file = NULL;
-    argc = extract_redirect(argc, argv, &redirect_file);
+    int target_fd = -1;
+    int append = 0;
+    argc = extract_redirect(argc, argv, &redirect_file, &target_fd, &append);
 
     // Apply redirect if present (for builtins — externals handle it in child)
-    int saved_fd = apply_redirect(redirect_file);
+    int saved_fd = apply_redirect(redirect_file, target_fd, append);
 
     // Dispatch: builtin → external → not found
     if (exec_builtin(argc, argv)) {
-      restore_redirect(saved_fd);
+      restore_redirect(saved_fd, target_fd);
       free_args(argc, argv);
       continue;
     }
 
-    // Restore stdout before trying external/not-found (they handle redirect
-    // themselves)
-    restore_redirect(saved_fd);
+    // Restore stdout/stderr before trying external/not-found (they handle
+    // redirect themselves)
+    restore_redirect(saved_fd, target_fd);
 
-    if (exec_external(argc, argv, redirect_file)) {
+    if (exec_external(argc, argv, redirect_file, target_fd, append)) {
       free_args(argc, argv);
       continue;
     } else {
