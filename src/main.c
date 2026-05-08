@@ -33,7 +33,7 @@ int main(int argc_unused, char *argv_unused[]) {
 
     // Extract redirect (e.g., "> output.txt") from argv
     char *redirect_file = NULL;
-    argc = extract_redirect(argc, argv, &redirect_file);
+    argc = extract_redirect(argc, argv, redirect_file);
 
     // Apply redirect if present (for builtins — externals handle it in child)
     int saved_fd = apply_redirect(redirect_file);
