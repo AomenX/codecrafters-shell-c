@@ -21,7 +21,7 @@ int extract_redirect(int argc, char **argv, char **redirect_file) {
     if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0) {
       target_fd = STDOUT_FILENO;
       flags |= O_TRUNC;
-    } else if (strcmp(argv[i], ">>") == 0) {
+    } else if (strcmp(argv[i], ">>") == 0 || strcmp(argv[i], "1>>") == 0) {
       target_fd = STDOUT_FILENO;
       flags |= O_APPEND;
     } else if (strcmp(argv[i], "2>") == 0) {
