@@ -8,7 +8,7 @@
 int extract_redirect(int argc, char **argv, char **redirect_file) {
   // TODO: loop through argv, find ">", extract filename, shorten argv
   for (int i = 0; i < argc; i++) {
-    if (strcmp(argv[i], ">") == 0) {
+    if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0) {
       *redirect_file = argv[i + 1];
       argv[i] = NULL;
       return i;
