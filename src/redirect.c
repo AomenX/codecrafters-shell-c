@@ -45,6 +45,10 @@ int apply_redirect(const char *redirect_file) {
     perror("dup2 failed");
     return -1;
   }
+  if (dup2(fd, STDERR_FILENO) == -1) {
+    perror("dup2 failed");
+    return -1;
+  }
   close(fd);
   return saved_fd;
 }
