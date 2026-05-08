@@ -18,3 +18,5 @@ int apply_redirect(const char *redirect_file);
 void restore_redirect(int saved_fd);
 
 #endif
+extern int redirect_target_fd;
+extern int redirect_flags;

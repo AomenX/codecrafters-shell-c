@@ -1,5 +1,6 @@
 #include "exec.h"
 #include "path.h"
+#include "redirect.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,35 +12,40 @@ int exec_external(int argc, char **argv, const char *redirect_file) {
   if (argc == 0)
     return 0;
 
-  // Check if command exists in PATH before forking
   char *path = find_in_path(argv[0]);
-  if (path == NULL) {
+  if (path == NULL)
     return 0;
-  }
 
-  // Fork a child process to run the external program
   pid_t pid = fork();
   if (pid < 0) {
     perror("fork failed");
     free(path);
     return 0;
   } else if (pid == 0) {
-    // Child: apply redirect if requested
+    // CHILD PROCESS
     if (redirect_file != NULL) {
-      int fd = open(redirect_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      // 1. Open with the correct flags (O_TRUNC vs O_APPEND)
+      int fd = open(redirect_file, redirect_flags, 0644);
       if (fd == -1) {
         perror("open failed");
         exit(1);
       }
-      dup2(fd, STDOUT_FILENO);
+
+      // 2. Use the correct target (STDOUT or STDERR)
+      if (dup2(fd, redirect_target_fd) == -1) {
+        perror("dup2 failed");
+        exit(1);
+      }
       close(fd);
     }
-    // Replace this process with the external program
+
+    // 3. execvp now sees a NULL-terminated argv that was "cut" by
+    // extract_redirect
     execvp(argv[0], argv);
     perror("execvp failed");
     exit(1);
   } else {
-    // Parent: wait for child to finish before returning to the REPL
+    // PARENT PROCESS
     waitpid(pid, NULL, 0);
   }
 
