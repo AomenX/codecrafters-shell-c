@@ -3,6 +3,6 @@
 
 // Executes the command specified in argv.
 // Returns 1 if handled, 0 otherwise.
-int exec_external(int argc, char **argv);
+int exec_external(int argc, char **argv, const char *redirect_file);
 
 #endif
