@@ -21,6 +21,7 @@ void history_move_next(void);
 void history_move_prev(void);
 void execute_history_command(int index);
 void read_history_from_file(const char *path);
+void write_history_to_file(const char *path);
 
 // History configuration
 #define MAX_HISTORY_SIZE 1000
