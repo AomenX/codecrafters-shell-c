@@ -24,6 +24,7 @@ static char *history_entries[MAX_HISTORY_SIZE];
 static int history_count = 0;
 static int history_pos = 0;
 static int history_initialized = 0;
+static int last_saved_index = 0;  // Track last command index saved to file
 
 int exec_builtin(int argc, char **argv) {
   if (argc == 0)
@@ -306,6 +307,9 @@ void read_history_from_file(const char *path) {
   }
   
   fclose(file);
+  
+  // Mark all current history as saved
+  last_saved_index = history_count;
 }
 
 // cmd_history — handle history builtin command
@@ -380,6 +384,9 @@ void write_history_to_file(const char *path) {
   }
   
   fclose(file);
+  
+  // Mark all current history as saved
+  last_saved_index = history_count;
 }
 
 void append_history_to_file(const char *path) {
@@ -394,13 +401,8 @@ void append_history_to_file(const char *path) {
     return;
   }
   
-  // Append all history entries to file
-  int start = 0;
-  if (history_count > 0) {
-    start = (history_count > MAX_HISTORY_SIZE) ? (history_count - MAX_HISTORY_SIZE) : 0;
-  }
-  
-  for (int i = start; i < history_count; i++) {
+  // Append only new commands (from last_saved_index onwards)
+  for (int i = last_saved_index; i < history_count; i++) {
     int index = i % MAX_HISTORY_SIZE;
     if (history_entries[index] != NULL) {
       fprintf(file, "%s\n", history_entries[index]);
@@ -408,4 +410,7 @@ void append_history_to_file(const char *path) {
   }
   
   fclose(file);
+  
+  // Mark all current history as saved
+  last_saved_index = history_count;
 }
