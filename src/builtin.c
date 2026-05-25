@@ -307,7 +307,39 @@ static void cmd_history(int argc, char **argv) {
       // Unknown argument
       fprintf(stderr, "history: invalid argument: %s\n", argv[1]);
     }
+  } else if (argc == 3 && strcmp(argv[1], "-r") == 0) {
+    // Read history from file: history -r <path>
+    read_history_from_file(argv[2]);
   } else {
     fprintf(stderr, "history: too many arguments\n");
   }
+}
+
+void read_history_from_file(const char *path) {
+  if (path == NULL) {
+    fprintf(stderr, "history: file path required\n");
+    return;
+  }
+  
+  FILE *file = fopen(path, "r");
+  if (file == NULL) {
+    fprintf(stderr, "history: cannot open file: %s\n", path);
+    return;
+  }
+  
+  char line[MAX_HISTORY_LINE_LEN];
+  while (fgets(line, sizeof(line), file) != NULL) {
+    // Remove trailing newline
+    size_t len = strlen(line);
+    if (len > 0 && line[len - 1] == '\n') {
+      line[len - 1] = '\0';
+    }
+    
+    // Add non-empty lines to history
+    if (strlen(line) > 0) {
+      add_to_history(line);
+    }
+  }
+  
+  fclose(file);
 }
