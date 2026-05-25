@@ -194,6 +194,28 @@ int get_history_size(void) {
   return history_count;
 }
 
+void list_history_last(int limit) {
+  if (!history_initialized) {
+    init_history();
+  }
+  
+  if (limit <= 0) {
+    return;
+  }
+  
+  int start = 0;
+  if (history_count > limit) {
+    start = history_count - limit;
+  }
+  
+  for (int i = start; i < history_count; i++) {
+    int index = i % MAX_HISTORY_SIZE;
+    if (history_entries[index] != NULL) {
+      printf("%5d  %s\n", i + 1, history_entries[index]);
+    }
+  }
+}
+
 const char *get_history_entry(int index) {
   if (index < 1 || index > history_count) {
     return NULL;
@@ -267,14 +289,14 @@ static void cmd_history(int argc, char **argv) {
     // List all history
     list_history();
   } else if (argc == 2) {
-    // Check if it's a number (history number) or "history" command
+    // Check if it's a number (history limit) or "history" command
     char *endptr;
     long num = strtol(argv[1], &endptr, 10);
     if (*endptr == '\0') {
-      // It's a number - execute that history command
-      execute_history_command((int)num);
+      // It's a number - show last N entries
+      list_history_last((int)num);
     } else if (argv[1][0] == '!') {
-      // Handle !n syntax
+      // Handle !n syntax to execute commands
       long num = strtol(argv[1] + 1, &endptr, 10);
       if (*endptr == '\0') {
         execute_history_command((int)num);

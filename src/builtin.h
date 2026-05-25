@@ -12,6 +12,7 @@ int exec_builtin(int argc, char **argv);
 void init_history(void);
 void add_to_history(const char *cmd);
 void list_history(void);
+void list_history_last(int limit);
 int get_history_size(void);
 const char *get_history_entry(int index);
 void set_history_pos(int pos);
