@@ -20,6 +20,12 @@ int main(int argc_unused, char *argv_unused[]) {
   // Initialize history
   init_history();
   
+  // Load history from HISTFILE environment variable if set
+  char *histfile = getenv("HISTFILE");
+  if (histfile != NULL && strlen(histfile) > 0) {
+    read_history_from_file(histfile);
+  }
+  
   char input[1024];
   char *argv[256];
 
