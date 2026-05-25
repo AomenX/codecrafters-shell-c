@@ -17,6 +17,9 @@ int main(int argc_unused, char *argv_unused[]) {
   (void)argc_unused;
   (void)argv_unused;
 
+  // Initialize history
+  init_history();
+  
   char input[1024];
   char *argv[256];
 
@@ -26,6 +29,12 @@ int main(int argc_unused, char *argv_unused[]) {
     char *line = readline("$ ");
     if (line == NULL) {
       break; // EOF (Ctrl+D)
+    }
+
+    // Add non-empty line to history
+    if (strlen(line) > 0) {
+      add_to_history(line);
+      add_history(line);
     }
 
     strncpy(input, line, sizeof(input) - 1);

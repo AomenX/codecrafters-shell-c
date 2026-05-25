@@ -1,7 +1,10 @@
-// builtin.c — Built-in commands: exit, echo, type, pwd, cd.
+// builtin.c — Built-in commands: exit, echo, type, pwd, history.
 
 #include "builtin.h"
 #include "path.h"
+#include "parse.h"
+#include "redirect.h"
+#include "exec.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,8 +15,15 @@ static void cmd_echo(int argc, char **argv);
 static void cmd_type(int argc, char **argv);
 static void cmd_pwd(void);
 static int cmd_cd(int argc, char **argv);
+static void cmd_history(int argc, char **argv);
 
-static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd"};
+static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history"};
+
+// History storage
+static char *history_entries[MAX_HISTORY_SIZE];
+static int history_count = 0;
+static int history_pos = 0;
+static int history_initialized = 0;
 
 int exec_builtin(int argc, char **argv) {
   if (argc == 0)
@@ -35,6 +45,9 @@ int exec_builtin(int argc, char **argv) {
     return 1;
   } else if (strcmp(cmd, "cd") == 0) {
     cmd_cd(argc, argv);
+    return 1;
+  } else if (strcmp(cmd, "history") == 0) {
+    cmd_history(argc, argv);
     return 1;
   }
   return 0;
@@ -115,5 +128,156 @@ static void cmd_pwd(void) {
   if (path != NULL) {
     printf("%s\n", path);
     free(path);
+  }
+}
+
+// History management functions
+
+void init_history(void) {
+  if (!history_initialized) {
+    for (int i = 0; i < MAX_HISTORY_SIZE; i++) {
+      history_entries[i] = NULL;
+    }
+    history_count = 0;
+    history_pos = 0;
+    history_initialized = 1;
+  }
+}
+
+void add_to_history(const char *cmd) {
+  if (!history_initialized) {
+    init_history();
+  }
+  
+  // Don't add empty commands or duplicates of the last command
+  if (cmd == NULL || strlen(cmd) == 0) {
+    return;
+  }
+  if (history_count > 0 && strcmp(cmd, history_entries[(history_count - 1) % MAX_HISTORY_SIZE]) == 0) {
+    return;
+  }
+  
+  // Add to history
+  int index = history_count % MAX_HISTORY_SIZE;
+  if (history_entries[index] != NULL) {
+    free(history_entries[index]);
+  }
+  history_entries[index] = strdup(cmd);
+  
+  if (history_count < MAX_HISTORY_SIZE) {
+    history_count++;
+  }
+  
+  // Reset position to end when adding new command
+  history_pos = history_count;
+}
+
+void list_history(void) {
+  if (!history_initialized) {
+    init_history();
+  }
+  
+  int start = 0;
+  if (history_count > 0) {
+    start = (history_count > MAX_HISTORY_SIZE) ? (history_count - MAX_HISTORY_SIZE) : 0;
+  }
+  
+  for (int i = start; i < history_count; i++) {
+    int index = i % MAX_HISTORY_SIZE;
+    if (history_entries[index] != NULL) {
+      printf("%d  %s\n", i + 1, history_entries[index]);
+    }
+  }
+}
+
+int get_history_size(void) {
+  return history_count;
+}
+
+const char *get_history_entry(int index) {
+  if (index < 1 || index > history_count) {
+    return NULL;
+  }
+  return history_entries[(index - 1) % MAX_HISTORY_SIZE];
+}
+
+void set_history_pos(int pos) {
+  if (pos < 0) pos = 0;
+  if (pos > history_count) pos = history_count;
+  history_pos = pos;
+}
+
+int get_history_pos(void) {
+  return history_pos;
+}
+
+void history_move_next(void) {
+  if (history_pos < history_count) {
+    history_pos++;
+  }
+}
+
+void history_move_prev(void) {
+  if (history_pos > 0) {
+    history_pos--;
+  }
+}
+
+void execute_history_command(int index) {
+  if (index < 1 || index > history_count) {
+    fprintf(stderr, "history command not found: %d\n", index);
+    return;
+  }
+  
+  const char *cmd = get_history_entry(index);
+  if (cmd != NULL) {
+    // Parse and execute the command
+    char *argv[256];
+    char *cmd_copy = strdup(cmd);
+    int argc = parse_input(cmd_copy, argv);
+    
+    if (argc > 0) {
+      if (!exec_builtin(argc, argv)) {
+        // Not a builtin, try external
+        char *redirect_file = NULL;
+        argc = extract_redirect(argc, argv, &redirect_file);
+        
+        int saved_fd = apply_redirect(redirect_file);
+        if (exec_external(argc, argv, redirect_file)) {
+          restore_redirect(saved_fd);
+        } else {
+          restore_redirect(saved_fd);
+          printf("%s: command not found\n", argv[0]);
+        }
+      }
+    }
+    
+    free(cmd_copy);
+    free_args(argc, argv);
+  }
+}
+
+// cmd_history — handle history builtin command
+static void cmd_history(int argc, char **argv) {
+  if (!history_initialized) {
+    init_history();
+  }
+  
+  if (argc == 1) {
+    // List all history
+    list_history();
+  } else if (argc == 2) {
+    // Check if it's a number (history number) or "history" command
+    char *endptr;
+    long num = strtol(argv[1], &endptr, 10);
+    if (*endptr == '\0') {
+      // It's a number - execute that history command
+      execute_history_command((int)num);
+    } else {
+      // Unknown argument
+      fprintf(stderr, "history: invalid argument: %s\n", argv[1]);
+    }
+  } else {
+    fprintf(stderr, "history: too many arguments\n");
   }
 }
