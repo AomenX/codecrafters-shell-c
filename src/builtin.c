@@ -84,6 +84,12 @@ static int cmd_exit(int argc, char **argv) {
   if (argc > 1) {
     code = atoi(argv[1]);
   }
+
+  const char *histfile = getenv("HISTFILE");
+  if (histfile != NULL && strlen(histfile) > 0) {
+    write_history_to_file(histfile);
+  }
+
   exit(code);
   return code; // unreachable
 }
