@@ -273,6 +273,14 @@ static void cmd_history(int argc, char **argv) {
     if (*endptr == '\0') {
       // It's a number - execute that history command
       execute_history_command((int)num);
+    } else if (argv[1][0] == '!') {
+      // Handle !n syntax
+      long num = strtol(argv[1] + 1, &endptr, 10);
+      if (*endptr == '\0') {
+        execute_history_command((int)num);
+      } else {
+        fprintf(stderr, "history: invalid argument: %s\n", argv[1]);
+      }
     } else {
       // Unknown argument
       fprintf(stderr, "history: invalid argument: %s\n", argv[1]);
