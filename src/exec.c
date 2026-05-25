@@ -1,3 +1,5 @@
+// exec.c — External command execution: resolve PATH, fork, redirect in child, wait.
+
 #include "exec.h"
 #include "path.h"
 #include "redirect.h"
@@ -21,9 +23,7 @@ int exec_external(int argc, char **argv, const char *redirect_file) {
     free(path);
     return 0;
   } else if (pid == 0) {
-    // --- CHILD PROCESS ---
     if (redirect_file != NULL) {
-      // This helper handles O_TRUNC/O_APPEND and STDOUT/STDERR automatically
       if (apply_redirect(redirect_file) == -1) {
         exit(1);
       }
@@ -33,7 +33,6 @@ int exec_external(int argc, char **argv, const char *redirect_file) {
     perror("execvp failed");
     exit(1);
   } else {
-    // --- PARENT PROCESS ---
     waitpid(pid, NULL, 0);
   }
 

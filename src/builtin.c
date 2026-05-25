@@ -1,3 +1,5 @@
+// builtin.c — Built-in commands: exit, echo, type, pwd, cd.
+
 #include "builtin.h"
 #include "path.h"
 #include <stdio.h>
@@ -5,18 +7,14 @@
 #include <string.h>
 #include <unistd.h>
 
-// Forward declarations (defined below)
 static int cmd_exit(int argc, char **argv);
 static void cmd_echo(int argc, char **argv);
 static void cmd_type(int argc, char **argv);
 static void cmd_pwd(void);
 static int cmd_cd(int argc, char **argv);
 
-// All builtin names — used by cmd_type to identify builtins
 static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd"};
 
-// Checks if argv[0] is a builtin, and if so, executes it.
-// Returns 1 if handled, 0 otherwise.
 int exec_builtin(int argc, char **argv) {
   if (argc == 0)
     return 0;
@@ -39,10 +37,11 @@ int exec_builtin(int argc, char **argv) {
     cmd_cd(argc, argv);
     return 1;
   }
-  return 0; // Not a builtin
+  return 0;
 }
 
-// ========== cd builtin ==========
+// cd [path] — change directory; empty path or "~" uses $HOME.
+// Updates OLDPWD and PWD when getcwd succeeds.
 static int cmd_cd(int argc, char **argv) {
   char cwd[1024];
   const char *path = (argc > 1) ? argv[1] : "";
@@ -50,7 +49,7 @@ static int cmd_cd(int argc, char **argv) {
   if (strcmp(path, "~") == 0 || strcmp(path, "") == 0) {
     path = getenv("HOME");
   }
-  // save old path
+
   if (getcwd(cwd, sizeof(cwd)))
     setenv("OLDPWD", cwd, 1);
 
@@ -58,24 +57,24 @@ static int cmd_cd(int argc, char **argv) {
     fprintf(stderr, "cd: %s: No such file or directory\n", path);
     return -1;
   }
-  // save new path
+
   if (getcwd(cwd, sizeof(cwd)))
     setenv("PWD", cwd, 1);
 
   return 0;
 }
 
-// ========== exit builtin ==========
+// exit [code] — terminate the shell (default status 0).
 static int cmd_exit(int argc, char **argv) {
   int code = 0;
   if (argc > 1) {
     code = atoi(argv[1]);
   }
   exit(code);
-  return code; // Never reached, but keeps the compiler happy
+  return code; // unreachable
 }
 
-// ========== echo builtin ==========
+// echo args... — print arguments separated by spaces, then newline.
 static void cmd_echo(int argc, char **argv) {
   for (int i = 1; i < argc; i++) {
     if (i > 1)
@@ -85,15 +84,13 @@ static void cmd_echo(int argc, char **argv) {
   printf("\n");
 }
 
-// ========== type builtin ==========
-// Identifies a command as: builtin → external (in PATH) → not found
+// type name — report whether name is a builtin, external, or missing.
 static void cmd_type(int argc, char **argv) {
   if (argc < 2) {
     return;
   }
   const char *arg = argv[1];
 
-  // 1. Check if it's a builtin
   for (int i = 0; i < (int)(sizeof(builtins_names) / sizeof(builtins_names[0]));
        i++) {
     if (strcmp(arg, builtins_names[i]) == 0) {
@@ -102,7 +99,6 @@ static void cmd_type(int argc, char **argv) {
     }
   }
 
-  // 2. Search PATH for an external executable
   char *path = find_in_path(arg);
   if (path != NULL) {
     printf("%s is %s\n", arg, path);
@@ -110,11 +106,10 @@ static void cmd_type(int argc, char **argv) {
     return;
   }
 
-  // 3. Not found anywhere
   printf("%s: not found\n", arg);
 }
 
-// ========== pwd builtin ==========
+// pwd — print the current working directory.
 static void cmd_pwd(void) {
   char *path = getcwd(NULL, 0);
   if (path != NULL) {

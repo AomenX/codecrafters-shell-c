@@ -1,3 +1,5 @@
+// redirect.c — Redirection operators and dup2-based fd swapping.
+
 #include "redirect.h"
 #include <fcntl.h>
 #include <stdio.h>
@@ -10,7 +12,7 @@ typedef struct {
   int flags;
 } RedirectConfig;
 
-// Global configuration to track the latest redirection parsed
+// Set by extract_redirect; read by apply_redirect for the next open/dup2.
 static RedirectConfig current_config;
 
 int extract_redirect(int argc, char **argv, char **redirect_file) {
@@ -33,13 +35,11 @@ int extract_redirect(int argc, char **argv, char **redirect_file) {
     }
 
     if (target_fd != -1) {
-      // Safety check: ensure filename exists
       if (i + 1 < argc) {
         *redirect_file = argv[i + 1];
         current_config.target_fd = target_fd;
         current_config.flags = flags;
 
-        // Cut the argv array at the operator
         argv[i] = NULL;
         return i;
       }
@@ -59,10 +59,8 @@ int apply_redirect(const char *redirect_file) {
     return -1;
   }
 
-  // Save the original FD (1 or 2)
   int saved_fd = dup(current_config.target_fd);
 
-  // Redirect target FD to our file
   if (dup2(fd, current_config.target_fd) == -1) {
     perror("dup2 failed");
     close(fd);

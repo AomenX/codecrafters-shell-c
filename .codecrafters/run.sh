@@ -1,11 +1,7 @@
 #!/bin/sh
-#
-# This script is used to run your program on CodeCrafters
-#
-# This runs after .codecrafters/compile.sh
-#
-# Learn more: https://codecrafters.io/program-interface
+# CodeCrafters run step (after compile.sh). Replaces the shell process with the binary.
+# https://codecrafters.io/program-interface
 
-set -e # Exit on failure
+set -e
 
 exec $(dirname "$0")/build/shell "$@"

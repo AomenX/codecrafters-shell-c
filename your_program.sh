@@ -1,25 +1,15 @@
 #!/bin/sh
-#
-# Use this script to run your program LOCALLY.
-#
-# Note: Changing this script WILL NOT affect how CodeCrafters runs your program.
-#
-# Learn more: https://codecrafters.io/program-interface
+# Local dev entry point: compile with CMake, then run ./build/shell.
+# Remote grading uses .codecrafters/compile.sh and .codecrafters/run.sh instead.
+# https://codecrafters.io/program-interface
 
-set -e # Exit early if any commands fail
+set -e
 
-# Copied from .codecrafters/compile.sh
-#
-# - Edit this to change how your program compiles locally
-# - Edit .codecrafters/compile.sh to change how your program compiles remotely
+# Compile (mirror .codecrafters/compile.sh for local tweaks)
 (
   cd "$(dirname "$0")" # Ensure compile steps are run within the repository directory
   cmake -B build -S .
   cmake --build ./build
 )
 
-# Copied from .codecrafters/run.sh
-#
-# - Edit this to change how your program runs locally
-# - Edit .codecrafters/run.sh to change how your program runs remotely
-exec $(dirname "$0")/build/shell "$@"
+exec "$(dirname "$0")/build/shell" "$@"

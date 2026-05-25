@@ -1,8 +1,10 @@
+// path.h — Resolve command names against the PATH environment variable.
+
 #ifndef PATH_H
 #define PATH_H
 
-// Searches the PATH environment variable for an executable matching `cmd`.
-// Returns the full path (e.g. "/bin/cat") if found, or NULL if not found.
+// Search PATH for an executable named cmd. Caller must free the returned string.
+// Returns NULL if cmd is not found or PATH is unset.
 char *find_in_path(const char *cmd);
 
 #endif

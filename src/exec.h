@@ -1,8 +1,10 @@
+// exec.h — Run external programs found on PATH via fork + execvp.
+
 #ifndef EXEC_H
 #define EXEC_H
 
-// Executes the command specified in argv.
-// Returns 1 if handled, 0 otherwise.
+// Fork and exec argv[0] if it exists on PATH. redirect_file is applied in the child.
+// Returns 1 when the command was found and run, 0 if not on PATH or fork failed.
 int exec_external(int argc, char **argv, const char *redirect_file);
 
 #endif
