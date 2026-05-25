@@ -343,6 +343,9 @@ static void cmd_history(int argc, char **argv) {
     } else if (strcmp(argv[1], "-w") == 0) {
       // Write history to file: history -w <path>
       write_history_to_file(argv[2]);
+    } else if (strcmp(argv[1], "-a") == 0) {
+      // Append history to file: history -a <path>
+      append_history_to_file(argv[2]);
     } else {
       fprintf(stderr, "history: invalid option: %s\n", argv[1]);
     }
@@ -364,6 +367,34 @@ void write_history_to_file(const char *path) {
   }
   
   // Write all history entries to file
+  int start = 0;
+  if (history_count > 0) {
+    start = (history_count > MAX_HISTORY_SIZE) ? (history_count - MAX_HISTORY_SIZE) : 0;
+  }
+  
+  for (int i = start; i < history_count; i++) {
+    int index = i % MAX_HISTORY_SIZE;
+    if (history_entries[index] != NULL) {
+      fprintf(file, "%s\n", history_entries[index]);
+    }
+  }
+  
+  fclose(file);
+}
+
+void append_history_to_file(const char *path) {
+  if (path == NULL) {
+    fprintf(stderr, "history: file path required\n");
+    return;
+  }
+  
+  FILE *file = fopen(path, "a");
+  if (file == NULL) {
+    fprintf(stderr, "history: cannot open file for appending: %s\n", path);
+    return;
+  }
+  
+  // Append all history entries to file
   int start = 0;
   if (history_count > 0) {
     start = (history_count > MAX_HISTORY_SIZE) ? (history_count - MAX_HISTORY_SIZE) : 0;
