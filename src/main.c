@@ -10,7 +10,7 @@
 #include "builtin.h"
 #include "exec.h"
 #include "parse.h"
-#include "pipeline.h"
+#include "pipe.h"
 #include "redirect.h"
 
 int main(int argc_unused, char *argv_unused[]) {
