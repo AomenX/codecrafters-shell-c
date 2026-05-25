@@ -34,7 +34,11 @@ int main(int argc_unused, char *argv_unused[]) {
 
     char *line = readline("$ ");
     if (line == NULL) {
-      break; // EOF (Ctrl+D)
+      // EOF (Ctrl+D) - save history and exit
+      if (histfile != NULL && strlen(histfile) > 0) {
+        write_history_to_file(histfile);
+      }
+      break;
     }
 
     // Add non-empty line to history
@@ -77,6 +81,17 @@ int main(int argc_unused, char *argv_unused[]) {
       continue;
     }
 
+    // Handle exit command specially to save history
+    if (strcmp(argv[0], "exit") == 0) {
+      restore_redirect(saved_fd);
+      free_args(argc, argv);
+      // Save history to HISTFILE and exit
+      if (histfile != NULL && strlen(histfile) > 0) {
+        write_history_to_file(histfile);
+      }
+      exit(0);
+    }
+
     // Externals fork a child that applies redirect itself; restore parent fds first.
     restore_redirect(saved_fd);
 
@@ -87,6 +102,11 @@ int main(int argc_unused, char *argv_unused[]) {
 
     printf("%s: command not found\n", argv[0]);
     free_args(argc, argv);
+  }
+  
+  // Save history to HISTFILE on normal exit
+  if (histfile != NULL && strlen(histfile) > 0) {
+    write_history_to_file(histfile);
   }
   return 0;
 }
