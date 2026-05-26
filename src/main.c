@@ -400,6 +400,10 @@ int main(int argc_unused, char *argv_unused[]) {
     if (argc == 0)
       continue;
 
+    argc = expand_args(argc, argv);
+    if (argc == 0)
+      continue;
+
     int has_pipe = 0;
     for (int i = 0; i < argc; i++) {
       if (strcmp(argv[i], "|") == 0) {

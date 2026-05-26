@@ -30,7 +30,7 @@ static struct {
 } shell_vars[MAX_SHELL_VARS];
 static int num_shell_vars = 0;
 
-static const char *get_shell_var(const char *name) {
+const char *get_shell_var(const char *name) {
   for (int i = 0; i < num_shell_vars; i++) {
     if (strcmp(shell_vars[i].name, name) == 0) {
       return shell_vars[i].value;
@@ -347,6 +347,10 @@ void execute_history_command(int index) {
     char *cmd_copy = strdup(cmd);
     int argc = parse_input(cmd_copy, argv);
     
+    if (argc > 0) {
+      argc = expand_args(argc, argv);
+    }
+
     if (argc > 0) {
       if (!exec_builtin(argc, argv)) {
         // Not a builtin, try external

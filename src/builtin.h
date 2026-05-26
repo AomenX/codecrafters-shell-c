@@ -11,6 +11,9 @@ int exec_builtin(int argc, char **argv);
 // Completion management functions
 const char *get_completion_script(const char *cmd);
 
+// Shell variable lookup for parameter expansion.
+const char *get_shell_var(const char *name);
+
 // History management functions
 void init_history(void);
 void add_to_history(const char *cmd);

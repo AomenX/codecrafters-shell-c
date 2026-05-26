@@ -8,6 +8,10 @@
 // Returns argc (token count).
 int parse_input(char *input, char **argv);
 
+// Expand $VAR and ${VAR} in argv; unset variables become empty strings.
+// Empty arguments are removed. Returns the new argc.
+int expand_args(int argc, char **argv);
+
 // Free each argv[i] allocated by parse_input.
 void free_args(int argc, char **argv);
 
