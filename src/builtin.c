@@ -38,6 +38,21 @@ static const char *get_shell_var(const char *name) {
   return NULL;
 }
 
+static void set_shell_var(const char *name, const char *value) {
+  for (int i = 0; i < num_shell_vars; i++) {
+    if (strcmp(shell_vars[i].name, name) == 0) {
+      free(shell_vars[i].value);
+      shell_vars[i].value = strdup(value);
+      return;
+    }
+  }
+  if (num_shell_vars < MAX_SHELL_VARS) {
+    shell_vars[num_shell_vars].name = strdup(name);
+    shell_vars[num_shell_vars].value = strdup(value);
+    num_shell_vars++;
+  }
+}
+
 // History storage
 static char *history_entries[MAX_HISTORY_SIZE];
 static int history_count = 0;
@@ -110,8 +125,22 @@ static void cmd_declare(int argc, char **argv) {
   if (strcmp(argv[1], "-p") == 0) {
     if (argc < 3) return;
     const char *name = argv[2];
-    if (get_shell_var(name) == NULL) {
+    const char *value = get_shell_var(name);
+    if (value == NULL) {
       printf("declare: %s: not found\n", name);
+    } else {
+      printf("declare -- %s=\"%s\"\n", name, value);
+    }
+  } else {
+    const char *eq = strchr(argv[1], '=');
+    if (eq != NULL) {
+      size_t name_len = (size_t)(eq - argv[1]);
+      char name[256];
+      if (name_len >= sizeof(name))
+        name_len = sizeof(name) - 1;
+      memcpy(name, argv[1], name_len);
+      name[name_len] = '\0';
+      set_shell_var(name, eq + 1);
     }
   }
 }
