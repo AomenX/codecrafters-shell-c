@@ -432,9 +432,10 @@ static struct {
 static int num_completions = 0;
 
 static void cmd_complete(int argc, char **argv) {
-  if (argc < 3) return;
+  if (argc < 2) return;
 
   if (strcmp(argv[1], "-p") == 0) {
+    if (argc < 3) return;
     const char *cmd = argv[2];
     for (int i = 0; i < num_completions; i++) {
         if (strcmp(registered_completions[i].cmd, cmd) == 0) {
@@ -443,6 +444,22 @@ static void cmd_complete(int argc, char **argv) {
         }
     }
     printf("complete: %s: no completion specification\n", cmd);
+  } else if (strcmp(argv[1], "-r") == 0) {
+    // Remove completion rule for the given command, if it exists.
+    if (argc < 3) return;
+    const char *cmd = argv[2];
+    for (int i = 0; i < num_completions; i++) {
+        if (strcmp(registered_completions[i].cmd, cmd) == 0) {
+            free(registered_completions[i].cmd);
+            free(registered_completions[i].script);
+            // Shift remaining entries down.
+            for (int j = i + 1; j < num_completions; j++) {
+                registered_completions[j - 1] = registered_completions[j];
+            }
+            num_completions--;
+            break;
+        }
+    }
   } else if (strcmp(argv[1], "-C") == 0) {
     if (argc < 4) return;
     const char *script = argv[2];
