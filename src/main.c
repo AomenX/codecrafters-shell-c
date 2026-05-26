@@ -53,12 +53,6 @@ char *run_completer_script(const char *script_path) {
       size_t len = strlen(buffer);
       if (len > 0 && buffer[len - 1] == '\n') {
         buffer[len - 1] = '\0';
-        len--;
-      }
-      // Append a space if not already present
-      if (len == 0 || buffer[len - 1] != ' ') {
-        buffer[len] = ' ';
-        buffer[len + 1] = '\0';
       }
       return strdup(buffer);
     }
