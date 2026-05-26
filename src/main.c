@@ -18,6 +18,7 @@ int main(int argc_unused, char *argv_unused[]);
 #include <dirent.h>
 #include <sys/stat.h>
 
+#ifndef __APPLE__
 void my_display_matches(char **matches, int num_matches, int max_length) {
     printf("\n");
     for (int i = 1; i <= num_matches; i++) {
@@ -32,6 +33,7 @@ void my_display_matches(char **matches, int num_matches, int max_length) {
     rl_on_new_line();
     rl_redisplay();
 }
+#endif
 
 char *my_generator(const char *text, int state) {
   static int list_index, len;
