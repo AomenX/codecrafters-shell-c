@@ -16,8 +16,9 @@ static void cmd_type(int argc, char **argv);
 static void cmd_pwd(void);
 static int cmd_cd(int argc, char **argv);
 static void cmd_history(int argc, char **argv);
+static void cmd_complete(int argc, char **argv);
 
-static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history"};
+static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete"};
 
 // History storage
 static char *history_entries[MAX_HISTORY_SIZE];
@@ -49,6 +50,9 @@ int exec_builtin(int argc, char **argv) {
     return 1;
   } else if (strcmp(cmd, "history") == 0) {
     cmd_history(argc, argv);
+    return 1;
+  } else if (strcmp(cmd, "complete") == 0) {
+    cmd_complete(argc, argv);
     return 1;
   }
   return 0;
@@ -419,4 +423,10 @@ void append_history_to_file(const char *path) {
   
   // Mark all current history as saved
   last_saved_index = history_count;
+}
+
+static void cmd_complete(int argc, char **argv) {
+  // Stub for complete builtin
+  (void)argc;
+  (void)argv;
 }
