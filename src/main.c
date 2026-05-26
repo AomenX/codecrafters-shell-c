@@ -263,11 +263,14 @@ char **my_completion(const char *text, int start, int end) {
         char *result_copy = strdup(result);
         int n = split_and_sort_lines(result_copy, lines, 128);
         if (n > 0) {
-          char **matches = (char **)malloc((n + 1) * sizeof(char *));
+          // Readline expects matches[0] to be the replacement text and
+          // matches[1..n] to be candidates.
+          char **matches = (char **)malloc((n + 2) * sizeof(char *));
+          matches[0] = strdup(text);
           for (int i = 0; i < n; i++) {
-            matches[i] = strdup(lines[i]);
+            matches[i + 1] = strdup(lines[i]);
           }
-          matches[n] = NULL;
+          matches[n + 1] = NULL;
           free(result);
           free(result_copy);
           rl_attempted_completion_over = 1;
