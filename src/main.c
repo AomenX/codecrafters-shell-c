@@ -16,6 +16,22 @@
 int main(int argc_unused, char *argv_unused[]);
 
 #include <dirent.h>
+#include <sys/stat.h>
+
+void my_display_matches(char **matches, int num_matches, int max_length) {
+    printf("\n");
+    for (int i = 1; i <= num_matches; i++) {
+        struct stat st;
+        if (stat(matches[i], &st) == 0 && S_ISDIR(st.st_mode)) {
+            printf("%s/  ", matches[i]);
+        } else {
+            printf("%s  ", matches[i]);
+        }
+    }
+    printf("\n");
+    rl_on_new_line();
+    rl_redisplay();
+}
 
 char *my_generator(const char *text, int state) {
   static int list_index, len;
@@ -120,6 +136,7 @@ int main(int argc_unused, char *argv_unused[]) {
   (void)argv_unused;
 
   rl_attempted_completion_function = my_completion;
+  rl_display_match_list_hook = my_display_matches;
 
   // Initialize history
   init_history();
