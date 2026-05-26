@@ -425,8 +425,42 @@ void append_history_to_file(const char *path) {
   last_saved_index = history_count;
 }
 
+#define MAX_COMPLETIONS 100
+static struct {
+    char *cmd;
+    char *script;
+} registered_completions[MAX_COMPLETIONS];
+static int num_completions = 0;
+
 static void cmd_complete(int argc, char **argv) {
-  // Stub for complete builtin
-  (void)argc;
-  (void)argv;
+  if (argc < 3) return;
+
+  if (strcmp(argv[1], "-p") == 0) {
+    const char *cmd = argv[2];
+    for (int i = 0; i < num_completions; i++) {
+        if (strcmp(registered_completions[i].cmd, cmd) == 0) {
+            printf("complete -C '%s' %s\n", registered_completions[i].script, cmd);
+            return;
+        }
+    }
+    printf("complete: %s: no completion specification\n", cmd);
+  } else if (strcmp(argv[1], "-C") == 0) {
+    if (argc < 4) return;
+    const char *script = argv[2];
+    const char *cmd = argv[3];
+    
+    for (int i = 0; i < num_completions; i++) {
+        if (strcmp(registered_completions[i].cmd, cmd) == 0) {
+            free(registered_completions[i].script);
+            registered_completions[i].script = strdup(script);
+            return;
+        }
+    }
+    
+    if (num_completions < MAX_COMPLETIONS) {
+        registered_completions[num_completions].cmd = strdup(cmd);
+        registered_completions[num_completions].script = strdup(script);
+        num_completions++;
+    }
+  }
 }

@@ -136,7 +136,9 @@ int main(int argc_unused, char *argv_unused[]) {
   (void)argv_unused;
 
   rl_attempted_completion_function = my_completion;
+#ifndef __APPLE__
   rl_completion_display_matches_hook = my_display_matches;
+#endif
 
   // Initialize history
   init_history();
