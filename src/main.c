@@ -22,7 +22,7 @@ int main(int argc_unused, char *argv_unused[]);
 #include <sys/stat.h>
 
 // Function to run completer script and get its output
-char *run_completer_script(const char *script_path, const char *cmd, const char *current, const char *prev) {
+char *run_completer_script(const char *script_path, const char *cmd, const char *current, const char *prev, const char *comp_line, int comp_point) {
   int pipefd[2];
   if (pipe(pipefd) == -1) {
     return NULL;
@@ -34,6 +34,12 @@ char *run_completer_script(const char *script_path, const char *cmd, const char 
     close(pipefd[0]);
     dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[1]);
+    
+    // Set COMP_LINE and COMP_POINT environment variables
+    char comp_point_str[32];
+    snprintf(comp_point_str, sizeof(comp_point_str), "%d", comp_point);
+    setenv("COMP_LINE", comp_line, 1);
+    setenv("COMP_POINT", comp_point_str, 1);
     
     // Try to exec the script directly with arguments
     execl(script_path, script_path, cmd, current, prev, NULL);
@@ -245,7 +251,14 @@ char **my_completion(const char *text, int start, int end) {
     // Check if there's a completer script for this command
     const char *script = get_completion_script(cmd_name);
     if (script != NULL) {
-      char *result = run_completer_script(script, cmd_name, current_word, prev_word);
+      char *result = run_completer_script(
+        script,
+        cmd_name,
+        current_word,
+        prev_word,
+        rl_line_buffer,
+        start
+      );
       if (result != NULL) {
         char **matches = (char **)malloc(2 * sizeof(char *));
         matches[0] = result;
