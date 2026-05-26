@@ -21,6 +21,23 @@ static void cmd_declare(int argc, char **argv);
 
 static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete", "declare"};
 
+// Shell variable storage (separate from environment variables).
+#define MAX_SHELL_VARS 256
+static struct {
+  char *name;
+  char *value;
+} shell_vars[MAX_SHELL_VARS];
+static int num_shell_vars = 0;
+
+static const char *get_shell_var(const char *name) {
+  for (int i = 0; i < num_shell_vars; i++) {
+    if (strcmp(shell_vars[i].name, name) == 0) {
+      return shell_vars[i].value;
+    }
+  }
+  return NULL;
+}
+
 // History storage
 static char *history_entries[MAX_HISTORY_SIZE];
 static int history_count = 0;
@@ -88,9 +105,15 @@ static int cmd_cd(int argc, char **argv) {
 
 // declare name[=value] — declare a shell variable.
 static void cmd_declare(int argc, char **argv) {
-  
-  (void)argc;
-  (void)argv;
+  if (argc < 2) return;
+
+  if (strcmp(argv[1], "-p") == 0) {
+    if (argc < 3) return;
+    const char *name = argv[2];
+    if (get_shell_var(name) == NULL) {
+      printf("declare: %s: not found\n", name);
+    }
+  }
 }
 // exit [code] — terminate the shell (default status 0).
 static int cmd_exit(int argc, char **argv) {
