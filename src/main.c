@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "builtin.h"
 #include "exec.h"
@@ -83,12 +84,7 @@ char *completer_generator(const char *text, int state) {
 void my_display_matches(char **matches, int num_matches, int max_length) {
     printf("\n");
     for (int i = 1; i <= num_matches; i++) {
-        struct stat st;
-        if (stat(matches[i], &st) == 0 && S_ISDIR(st.st_mode)) {
-            printf("%s/  ", matches[i]);
-        } else {
-            printf("%s  ", matches[i]);
-        }
+        printf("%s  ", matches[i]); // two spaces
     }
     printf("\n");
     rl_on_new_line();
@@ -186,7 +182,6 @@ char *my_generator(const char *text, int state) {
 
 char **my_completion(const char *text, int start, int end) {
   if (start == 0) {
-    // Completing command name
     rl_attempted_completion_over = 1;
     return rl_completion_matches(text, my_generator);
   } else {
@@ -260,11 +255,23 @@ char **my_completion(const char *text, int start, int end) {
         end // Use end for COMP_POINT
       );
       if (result != NULL) {
-        char **matches = (char **)malloc(2 * sizeof(char *));
-        matches[0] = result;
-        matches[1] = NULL;
-        rl_attempted_completion_over = 1;
-        return matches;
+        // Parse lines
+        char *lines[128];
+        char *result_copy = strdup(result);
+        int n = split_and_sort_lines(result_copy, lines, 128);
+        if (n > 0) {
+          char **matches = (char **)malloc((n + 1) * sizeof(char *));
+          for (int i = 0; i < n; i++) {
+            matches[i] = strdup(lines[i]);
+          }
+          matches[n] = NULL;
+          free(result);
+          free(result_copy);
+          rl_attempted_completion_over = 1;
+          return matches;
+        }
+        free(result);
+        free(result_copy);
       }
     }
     rl_attempted_completion_over = 0;
@@ -373,4 +380,28 @@ int main(int argc_unused, char *argv_unused[]) {
     write_history_to_file(histfile);
   }
   return 0;
+}
+
+// Helper: compare strings for qsort
+int cmpstr(const void *a, const void *b) {
+  const char *sa = *(const char **)a;
+  const char *sb = *(const char **)b;
+  return strcmp(sa, sb);
+}
+
+// Helper: split lines into array, sort, and return count
+int split_and_sort_lines(char *buf, char **out, int max) {
+  int count = 0;
+  char *saveptr = NULL;
+  char *line = strtok_r(buf, "\n", &saveptr);
+  while (line && count < max) {
+    // Skip empty lines
+    while (*line && isspace((unsigned char)*line)) line++;
+    if (*line) out[count++] = line;
+    line = strtok_r(NULL, "\n", &saveptr);
+  }
+  if (count > 1) {
+    qsort(out, count, sizeof(char *), cmpstr);
+  }
+  return count;
 }
