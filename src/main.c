@@ -20,7 +20,6 @@ int main(int argc_unused, char *argv_unused[]);
 
 #include <dirent.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 // Function to run completer script and get its output
 char *run_completer_script(const char *script_path) {
@@ -61,6 +60,19 @@ char *run_completer_script(const char *script_path) {
     }
   }
   
+  return NULL;
+}
+
+// Readline hooks for direct completion
+static char **completer_matches = NULL;
+
+char *completer_generator(const char *text, int state) {
+  // This is called by readline when a completer returns matches from my_completion
+  if (state == 0 && completer_matches) {
+    if (completer_matches[0]) {
+      return strdup(completer_matches[0]);
+    }
+  }
   return NULL;
 }
 
@@ -201,9 +213,12 @@ char **my_completion(const char *text, int start, int end) {
       char *result = run_completer_script(script);
       if (result != NULL) {
         // We need to return an array of matches for readline
+        // Allocate space for the match plus NULL terminator
         char **matches = (char **)malloc(2 * sizeof(char *));
-        matches[0] = result;
+        matches[0] = result;  // The completion result
         matches[1] = NULL;
+        
+        // We're done with completion
         rl_attempted_completion_over = 1;
         return matches;
       }
