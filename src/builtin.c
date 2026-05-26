@@ -160,32 +160,23 @@ void add_to_history(const char *cmd) {
     init_history();
   }
   
-  // Don't add empty commands or the 'history' builtin itself
+  // Don't add empty commands
   if (cmd == NULL || strlen(cmd) == 0) {
     return;
   }
-  if (strcmp(cmd, "history") == 0) {
-    // Do not record the history command itself
-    return;
-  }
-  // Previously we suppressed duplicates of the last command; this caused legitimate repeats to be omitted.
-  // The test expects both echo commands to appear, so we allow duplicates.
-  // if (history_count > 0 && strcmp(cmd, history_entries[(history_count - 1) % MAX_HISTORY_SIZE]) == 0) {
-  //   return;
-  // }
+  // Allow duplicates (no duplicate suppression)
 
-  
   // Add to history
   int index = history_count % MAX_HISTORY_SIZE;
   if (history_entries[index] != NULL) {
     free(history_entries[index]);
   }
   history_entries[index] = strdup(cmd);
-  
+
   if (history_count < MAX_HISTORY_SIZE) {
     history_count++;
   }
-  
+
   // Reset position to end when adding new command
   history_pos = history_count;
 }
