@@ -85,9 +85,15 @@ char *completer_generator(const char *text, int state) {
 
 #ifndef __APPLE__
 void my_display_matches(char **matches, int num_matches, int max_length) {
+    (void)max_length;
     printf("\n");
     for (int i = 1; i <= num_matches; i++) {
-        printf("%s  ", matches[i]); // two spaces
+        struct stat st;
+        if (matches[i] != NULL && stat(matches[i], &st) == 0 && S_ISDIR(st.st_mode)) {
+            printf("%s/  ", matches[i]);
+        } else {
+            printf("%s  ", matches[i]);
+        }
     }
     printf("\n");
     rl_on_new_line();
