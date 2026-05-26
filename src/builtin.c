@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 static int cmd_exit(int argc, char **argv);
 static void cmd_echo(int argc, char **argv);
@@ -51,6 +52,18 @@ static void set_shell_var(const char *name, const char *value) {
     shell_vars[num_shell_vars].value = strdup(value);
     num_shell_vars++;
   }
+}
+
+static int is_valid_identifier(const char *name) {
+  if (name == NULL || name[0] == '\0')
+    return 0;
+  if (!isalpha((unsigned char)name[0]) && name[0] != '_')
+    return 0;
+  for (int i = 1; name[i] != '\0'; i++) {
+    if (!isalnum((unsigned char)name[i]) && name[i] != '_')
+      return 0;
+  }
+  return 1;
 }
 
 // History storage
@@ -140,6 +153,10 @@ static void cmd_declare(int argc, char **argv) {
         name_len = sizeof(name) - 1;
       memcpy(name, argv[1], name_len);
       name[name_len] = '\0';
+      if (!is_valid_identifier(name)) {
+        printf("declare: `%s': not a valid identifier\n", argv[1]);
+        return;
+      }
       set_shell_var(name, eq + 1);
     }
   }
