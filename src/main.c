@@ -13,9 +13,36 @@
 #include "pipe.h"
 #include "redirect.h"
 
+int main(int argc_unused, char *argv_unused[]);
+
+char *my_generator(const char *text, int state) {
+  static int list_index, len;
+  const char *builtins[] = {"echo", "exit", NULL};
+  char *name;
+
+  if (!state) {
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while ((name = (char *)builtins[list_index++])) {
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+  return NULL;
+}
+
+char **my_completion(const char *text, int start, int end) {
+  rl_attempted_completion_over = 1; // Don't fall back to default filename completion
+  return rl_completion_matches(text, my_generator);
+}
+
 int main(int argc_unused, char *argv_unused[]) {
   (void)argc_unused;
   (void)argv_unused;
+
+  rl_attempted_completion_function = my_completion;
 
   // Initialize history
   init_history();
