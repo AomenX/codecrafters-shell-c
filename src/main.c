@@ -269,12 +269,42 @@ char **my_completion(const char *text, int start, int end) {
         char *result_copy = strdup(result);
         int n = split_and_sort_lines(result_copy, lines, 128);
         if (n > 0) {
+          // Compute longest common prefix (LCP) of all candidates.
+          const char *first = lines[0];
+          size_t lcp_len = strlen(first);
+          for (int i = 1; i < n && lcp_len > 0; i++) {
+            size_t j = 0;
+            while (j < lcp_len && lines[i][j] && first[j] && lines[i][j] == first[j]) {
+              j++;
+            }
+            lcp_len = j;
+          }
+
+          // Decide replacement text:
+          // - If only one candidate, replace with it (readline adds trailing space).
+          // - If multiple and LCP extends current input, replace with the LCP.
+          // - Otherwise, keep current input and just list candidates.
+          const char *replacement = text;
+          size_t text_len = strlen(text);
+          if (n == 1) {
+            replacement = lines[0];
+          } else if (lcp_len > text_len) {
+            // LCP strictly longer than current token; extend to LCP.
+            static char lcp_buf[256];
+            if (lcp_len >= sizeof(lcp_buf))
+              lcp_len = sizeof(lcp_buf) - 1;
+            memcpy(lcp_buf, first, lcp_len);
+            lcp_buf[lcp_len] = '\0';
+            replacement = lcp_buf;
+          } else {
+            // lcp_len <= text_len: no new characters to add, behave like no common prefix.
+            replacement = text;
+          }
+
           // Readline expects matches[0] to be the replacement text and
           // matches[1..n] to be candidates.
-          // For ambiguous matches, keep the current token unchanged.
-          // For a single match, allow readline to insert it (+ trailing space).
           char **matches = (char **)malloc((n + 2) * sizeof(char *));
-          matches[0] = strdup((n == 1) ? lines[0] : text);
+          matches[0] = strdup(replacement);
           for (int i = 0; i < n; i++) {
             matches[i + 1] = strdup(lines[i]);
           }
