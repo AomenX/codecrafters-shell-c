@@ -22,7 +22,7 @@ int main(int argc_unused, char *argv_unused[]);
 #include <sys/stat.h>
 
 // Function to run completer script and get its output
-char *run_completer_script(const char *script_path) {
+char *run_completer_script(const char *script_path, const char *cmd, const char *current, const char *prev) {
   int pipefd[2];
   if (pipe(pipefd) == -1) {
     return NULL;
@@ -35,10 +35,10 @@ char *run_completer_script(const char *script_path) {
     dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[1]);
     
-    // Try to exec the script directly
-    execl(script_path, script_path, NULL);
-    // If that fails, fallback to /bin/sh script_path
-    execl("/bin/sh", "sh", script_path, NULL);
+    // Try to exec the script directly with arguments
+    execl(script_path, script_path, cmd, current, prev, NULL);
+    // If that fails, fallback to /bin/sh script_path ...
+    execl("/bin/sh", "sh", script_path, cmd, current, prev, NULL);
     exit(1);
   } else if (pid > 0) {
     close(pipefd[1]);
@@ -184,44 +184,76 @@ char **my_completion(const char *text, int start, int end) {
     rl_attempted_completion_over = 1;
     return rl_completion_matches(text, my_generator);
   } else {
-    // Completing arguments - check if there's a completer script for the command
-    // Extract the command name from the beginning of the line
+    // Extract command, current word, and previous word
     const char *line = rl_line_buffer;
-    char cmd_name[256];
-    int i = 0;
-    
-    // Skip leading whitespace
-    while (line[i] && (line[i] == ' ' || line[i] == '\t')) {
-      i++;
+    char cmd_name[256] = "";
+    char current_word[256] = "";
+    char prev_word[256] = "";
+    int i = 0, word_start = 0, word_end = 0, word_idx = 0, word_count = 0;
+    char words[64][256];
+    int len = strlen(line);
+    // Tokenize the line into words
+    while (i <= len) {
+      // Skip leading spaces
+      while (line[i] == ' ' || line[i] == '\t') i++;
+      if (line[i] == '\0') break;
+      word_start = i;
+      // Find end of word
+      while (line[i] && line[i] != ' ' && line[i] != '\t') i++;
+      word_end = i;
+      int wlen = word_end - word_start;
+      if (wlen > 0 && word_count < 64) {
+        strncpy(words[word_count], line + word_start, wlen);
+        words[word_count][wlen] = '\0';
+        word_count++;
+      }
     }
-    
-    // Extract command name
-    int cmd_idx = 0;
-    while (line[i] && line[i] != ' ' && line[i] != '\t' && cmd_idx < sizeof(cmd_name) - 1) {
-      cmd_name[cmd_idx++] = line[i];
-      i++;
+    // Command is always the first word
+    if (word_count > 0) {
+      strncpy(cmd_name, words[0], sizeof(cmd_name) - 1);
+      cmd_name[sizeof(cmd_name) - 1] = '\0';
     }
-    cmd_name[cmd_idx] = '\0';
-    
+    // Find which word is being completed
+    int cursor = start;
+    int cur_word_idx = -1;
+    int pos = 0;
+    for (int w = 0; w < word_count; w++) {
+      // Find start and end of each word
+      const char *p = strstr(line + pos, words[w]);
+      if (!p) continue;
+      int wstart = p - line;
+      int wend = wstart + strlen(words[w]);
+      if (cursor >= wstart && cursor <= wend) {
+        cur_word_idx = w;
+        break;
+      }
+      pos = wend;
+    }
+    if (cur_word_idx == -1 && word_count > 0) {
+      cur_word_idx = word_count - 1;
+    }
+    if (cur_word_idx >= 0) {
+      strncpy(current_word, words[cur_word_idx], sizeof(current_word) - 1);
+      current_word[sizeof(current_word) - 1] = '\0';
+      if (cur_word_idx > 0) {
+        strncpy(prev_word, words[cur_word_idx - 1], sizeof(prev_word) - 1);
+        prev_word[sizeof(prev_word) - 1] = '\0';
+      } else {
+        prev_word[0] = '\0';
+      }
+    }
     // Check if there's a completer script for this command
     const char *script = get_completion_script(cmd_name);
     if (script != NULL) {
-      // Run the completer script and use its output
-      char *result = run_completer_script(script);
+      char *result = run_completer_script(script, cmd_name, current_word, prev_word);
       if (result != NULL) {
-        // We need to return an array of matches for readline
-        // Allocate space for the match plus NULL terminator
         char **matches = (char **)malloc(2 * sizeof(char *));
-        matches[0] = result;  // The completion result
+        matches[0] = result;
         matches[1] = NULL;
-        
-        // We're done with completion
         rl_attempted_completion_over = 1;
         return matches;
       }
     }
-    
-    // Fall back to default filename completion
     rl_attempted_completion_over = 0;
     return NULL;
   }
