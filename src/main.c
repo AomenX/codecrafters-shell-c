@@ -19,6 +19,9 @@
 
 int main(int argc_unused, char *argv_unused[]);
 
+// Forward declarations to satisfy C's "no implicit function declarations" rule.
+int split_and_sort_lines(char *buf, char **out, int max);
+
 #include <dirent.h>
 #include <sys/stat.h>
 
