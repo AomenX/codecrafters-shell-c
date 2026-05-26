@@ -265,8 +265,10 @@ char **my_completion(const char *text, int start, int end) {
         if (n > 0) {
           // Readline expects matches[0] to be the replacement text and
           // matches[1..n] to be candidates.
+          // For ambiguous matches, keep the current token unchanged.
+          // For a single match, allow readline to insert it (+ trailing space).
           char **matches = (char **)malloc((n + 2) * sizeof(char *));
-          matches[0] = strdup(text);
+          matches[0] = strdup((n == 1) ? lines[0] : text);
           for (int i = 0; i < n; i++) {
             matches[i + 1] = strdup(lines[i]);
           }
