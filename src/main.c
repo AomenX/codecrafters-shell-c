@@ -106,8 +106,13 @@ char *my_generator(const char *text, int state) {
 }
 
 char **my_completion(const char *text, int start, int end) {
-  rl_attempted_completion_over = 1; // Don't fall back to default filename completion
-  return rl_completion_matches(text, my_generator);
+  if (start == 0) {
+    rl_attempted_completion_over = 1; // Don't fall back to default filename completion for commands
+    return rl_completion_matches(text, my_generator);
+  } else {
+    rl_attempted_completion_over = 0; // Allow default filename completion for arguments
+    return NULL; // Let readline handle it
+  }
 }
 
 int main(int argc_unused, char *argv_unused[]) {
