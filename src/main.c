@@ -257,7 +257,7 @@ char **my_completion(const char *text, int start, int end) {
         current_word,
         prev_word,
         rl_line_buffer,
-        start
+        end // Use end for COMP_POINT
       );
       if (result != NULL) {
         char **matches = (char **)malloc(2 * sizeof(char *));
