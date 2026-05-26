@@ -463,3 +463,12 @@ static void cmd_complete(int argc, char **argv) {
     }
   }
 }
+
+const char *get_completion_script(const char *cmd) {
+  for (int i = 0; i < num_completions; i++) {
+    if (strcmp(registered_completions[i].cmd, cmd) == 0) {
+      return registered_completions[i].script;
+    }
+  }
+  return NULL;
+}

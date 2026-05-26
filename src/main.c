@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 #include "builtin.h"
 #include "exec.h"
@@ -17,6 +20,49 @@ int main(int argc_unused, char *argv_unused[]);
 
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+
+// Function to run completer script and get its output
+char *run_completer_script(const char *script_path) {
+  int pipefd[2];
+  if (pipe(pipefd) == -1) {
+    return NULL;
+  }
+
+  pid_t pid = fork();
+  if (pid == 0) {
+    // Child process
+    close(pipefd[0]);  // Close read end
+    dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to pipe
+    close(pipefd[1]);
+    
+    // Execute the script
+    execl("/bin/sh", "sh", script_path, NULL);
+    exit(1);  // If execl fails
+  } else if (pid > 0) {
+    // Parent process
+    close(pipefd[1]);  // Close write end
+    
+    // Read output from pipe
+    char buffer[1024];
+    ssize_t bytes_read = read(pipefd[0], buffer, sizeof(buffer) - 1);
+    close(pipefd[0]);
+    
+    int status;
+    waitpid(pid, &status, 0);
+    
+    if (bytes_read > 0) {
+      buffer[bytes_read] = '\0';
+      // Remove trailing newline if present
+      if (buffer[bytes_read - 1] == '\n') {
+        buffer[bytes_read - 1] = '\0';
+      }
+      return strdup(buffer);
+    }
+  }
+  
+  return NULL;
+}
 
 #ifndef __APPLE__
 void my_display_matches(char **matches, int num_matches, int max_length) {
@@ -37,7 +83,7 @@ void my_display_matches(char **matches, int num_matches, int max_length) {
 
 char *my_generator(const char *text, int state) {
   static int list_index, len;
-  const char *builtins[] = {"echo", "exit", "history", NULL}; // Add history as it was likely added previously
+  const char *builtins[] = {"echo", "exit", "history", "complete", NULL};
   static int search_phase; // 0 = builtins, 1 = PATH
   static char *path_copy = NULL;
   static char *path_token = NULL;
@@ -125,11 +171,47 @@ char *my_generator(const char *text, int state) {
 
 char **my_completion(const char *text, int start, int end) {
   if (start == 0) {
-    rl_attempted_completion_over = 1; // Don't fall back to default filename completion for commands
+    // Completing command name
+    rl_attempted_completion_over = 1;
     return rl_completion_matches(text, my_generator);
   } else {
-    rl_attempted_completion_over = 0; // Allow default filename completion for arguments
-    return NULL; // Let readline handle it
+    // Completing arguments - check if there's a completer script for the command
+    // Extract the command name from the beginning of the line
+    const char *line = rl_line_buffer;
+    char cmd_name[256];
+    int i = 0;
+    
+    // Skip leading whitespace
+    while (line[i] && (line[i] == ' ' || line[i] == '\t')) {
+      i++;
+    }
+    
+    // Extract command name
+    int cmd_idx = 0;
+    while (line[i] && line[i] != ' ' && line[i] != '\t' && cmd_idx < sizeof(cmd_name) - 1) {
+      cmd_name[cmd_idx++] = line[i];
+      i++;
+    }
+    cmd_name[cmd_idx] = '\0';
+    
+    // Check if there's a completer script for this command
+    const char *script = get_completion_script(cmd_name);
+    if (script != NULL) {
+      // Run the completer script and use its output
+      char *result = run_completer_script(script);
+      if (result != NULL) {
+        // We need to return an array of matches for readline
+        char **matches = (char **)malloc(2 * sizeof(char *));
+        matches[0] = result;
+        matches[1] = NULL;
+        rl_attempted_completion_over = 1;
+        return matches;
+      }
+    }
+    
+    // Fall back to default filename completion
+    rl_attempted_completion_over = 0;
+    return NULL;
   }
 }
 

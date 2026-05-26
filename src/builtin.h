@@ -8,6 +8,9 @@
 // If argv[0] names a builtin, run it and return 1; otherwise return 0.
 int exec_builtin(int argc, char **argv);
 
+// Completion management functions
+const char *get_completion_script(const char *cmd);
+
 // History management functions
 void init_history(void);
 void add_to_history(const char *cmd);
