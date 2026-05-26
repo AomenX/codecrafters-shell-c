@@ -31,35 +31,38 @@ char *run_completer_script(const char *script_path) {
   pid_t pid = fork();
   if (pid == 0) {
     // Child process
-    close(pipefd[0]);  // Close read end
-    dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to pipe
+    close(pipefd[0]);
+    dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[1]);
     
-    // Execute the script
+    // Try to exec the script directly
+    execl(script_path, script_path, NULL);
+    // If that fails, fallback to /bin/sh script_path
     execl("/bin/sh", "sh", script_path, NULL);
-    exit(1);  // If execl fails
+    exit(1);
   } else if (pid > 0) {
-    // Parent process
-    close(pipefd[1]);  // Close write end
-    
-    // Read output from pipe
+    close(pipefd[1]);
     char buffer[1024];
     ssize_t bytes_read = read(pipefd[0], buffer, sizeof(buffer) - 1);
     close(pipefd[0]);
-    
     int status;
     waitpid(pid, &status, 0);
-    
     if (bytes_read > 0) {
       buffer[bytes_read] = '\0';
       // Remove trailing newline if present
-      if (buffer[bytes_read - 1] == '\n') {
-        buffer[bytes_read - 1] = '\0';
+      size_t len = strlen(buffer);
+      if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+        len--;
+      }
+      // Append a space if not already present
+      if (len == 0 || buffer[len - 1] != ' ') {
+        buffer[len] = ' ';
+        buffer[len + 1] = '\0';
       }
       return strdup(buffer);
     }
   }
-  
   return NULL;
 }
 
