@@ -15,21 +15,93 @@
 
 int main(int argc_unused, char *argv_unused[]);
 
+#include <dirent.h>
+
 char *my_generator(const char *text, int state) {
   static int list_index, len;
-  const char *builtins[] = {"echo", "exit", NULL};
-  char *name;
-
+  const char *builtins[] = {"echo", "exit", "history", NULL}; // Add history as it was likely added previously
+  static int search_phase; // 0 = builtins, 1 = PATH
+  static char *path_copy = NULL;
+  static char *path_token = NULL;
+  static DIR *dir = NULL;
+  
   if (!state) {
     list_index = 0;
     len = strlen(text);
-  }
-
-  while ((name = (char *)builtins[list_index++])) {
-    if (strncmp(name, text, len) == 0) {
-      return strdup(name);
+    search_phase = 0;
+    
+    if (path_copy) {
+        free(path_copy);
+        path_copy = NULL;
+    }
+    if (dir) {
+        closedir(dir);
+        dir = NULL;
     }
   }
+
+  if (search_phase == 0) {
+    char *name;
+    while ((name = (char *)builtins[list_index++])) {
+      if (strncmp(name, text, len) == 0) {
+        return strdup(name);
+      }
+    }
+    search_phase = 1;
+    
+    char *path_env = getenv("PATH");
+    if (path_env) {
+        path_copy = strdup(path_env);
+        path_token = strtok(path_copy, ":");
+        if (path_token) {
+            dir = opendir(path_token);
+        }
+    }
+  }
+
+  if (search_phase == 1) {
+    while (path_token != NULL) {
+        if (dir == NULL) {
+            path_token = strtok(NULL, ":");
+            if (path_token) {
+                dir = opendir(path_token);
+            }
+            continue;
+        }
+
+        struct dirent *entry;
+        while ((entry = readdir(dir)) != NULL) {
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+            if (strncmp(entry->d_name, text, len) == 0) {
+                char full_path[1024];
+                snprintf(full_path, sizeof(full_path), "%s/%s", path_token, entry->d_name);
+                if (access(full_path, X_OK) == 0) {
+                    return strdup(entry->d_name);
+                }
+            }
+        }
+        
+        closedir(dir);
+        dir = NULL;
+        
+        path_token = strtok(NULL, ":");
+        if (path_token) {
+            dir = opendir(path_token);
+        }
+    }
+  }
+
+  if (path_copy) {
+      free(path_copy);
+      path_copy = NULL;
+  }
+  if (dir) {
+      closedir(dir);
+      dir = NULL;
+  }
+  
   return NULL;
 }
 
