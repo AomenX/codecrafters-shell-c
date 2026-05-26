@@ -52,20 +52,50 @@ char *run_completer_script(const char *script_path, const char *cmd, const char 
     exit(1);
   } else if (pid > 0) {
     close(pipefd[1]);
-    char buffer[1024];
-    ssize_t bytes_read = read(pipefd[0], buffer, sizeof(buffer) - 1);
+    size_t cap = 1024;
+    size_t used = 0;
+    char *buffer = malloc(cap);
+    if (buffer == NULL) {
+      close(pipefd[0]);
+      int status;
+      waitpid(pid, &status, 0);
+      return NULL;
+    }
+
+    while (1) {
+      if (used + 1 >= cap) {
+        size_t new_cap = cap * 2;
+        char *new_buf = realloc(buffer, new_cap);
+        if (new_buf == NULL) {
+          free(buffer);
+          close(pipefd[0]);
+          int status;
+          waitpid(pid, &status, 0);
+          return NULL;
+        }
+        buffer = new_buf;
+        cap = new_cap;
+      }
+
+      ssize_t n = read(pipefd[0], buffer + used, cap - used - 1);
+      if (n <= 0) {
+        break;
+      }
+      used += (size_t)n;
+    }
     close(pipefd[0]);
     int status;
     waitpid(pid, &status, 0);
-    if (bytes_read > 0) {
-      buffer[bytes_read] = '\0';
+    if (used > 0) {
+      buffer[used] = '\0';
       // Remove trailing newline if present
       size_t len = strlen(buffer);
       if (len > 0 && buffer[len - 1] == '\n') {
         buffer[len - 1] = '\0';
       }
-      return strdup(buffer);
+      return buffer;
     }
+    free(buffer);
   }
   return NULL;
 }
