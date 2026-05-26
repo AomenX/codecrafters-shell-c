@@ -17,8 +17,9 @@ static void cmd_pwd(void);
 static int cmd_cd(int argc, char **argv);
 static void cmd_history(int argc, char **argv);
 static void cmd_complete(int argc, char **argv);
+static void cmd_declare(int argc, char **argv);
 
-static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete"};
+static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete", "declare"};
 
 // History storage
 static char *history_entries[MAX_HISTORY_SIZE];
@@ -54,6 +55,9 @@ int exec_builtin(int argc, char **argv) {
   } else if (strcmp(cmd, "complete") == 0) {
     cmd_complete(argc, argv);
     return 1;
+  } else if (strcmp(cmd, "declare") == 0) {
+    cmd_declare(argc, argv);
+    return 1;
   }
   return 0;
 }
@@ -82,6 +86,12 @@ static int cmd_cd(int argc, char **argv) {
   return 0;
 }
 
+// declare name[=value] — declare a shell variable.
+static void cmd_declare(int argc, char **argv) {
+  
+  (void)argc;
+  (void)argv;
+}
 // exit [code] — terminate the shell (default status 0).
 static int cmd_exit(int argc, char **argv) {
   int code = 0;
