@@ -404,6 +404,14 @@ int main(int argc_unused, char *argv_unused[]) {
     if (argc == 0)
       continue;
 
+    int background = 0;
+    if (argc > 0 && strcmp(argv[argc - 1], "&") == 0) {
+      free(argv[argc - 1]);
+      argc--;
+      argv[argc] = NULL;
+      background = 1;
+    }
+
     int has_pipe = 0;
     for (int i = 0; i < argc; i++) {
       if (strcmp(argv[i], "|") == 0) {
@@ -444,7 +452,7 @@ int main(int argc_unused, char *argv_unused[]) {
     // Externals fork a child that applies redirect itself; restore parent fds first.
     restore_redirect(saved_fd);
 
-    if (exec_external(argc, argv, redirect_file)) {
+    if (exec_external(argc, argv, redirect_file, background)) {
       free_args(argc, argv);
       continue;
     }

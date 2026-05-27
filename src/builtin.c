@@ -369,7 +369,7 @@ void execute_history_command(int index) {
         argc = extract_redirect(argc, argv, &redirect_file);
         
         int saved_fd = apply_redirect(redirect_file);
-        if (exec_external(argc, argv, redirect_file)) {
+        if (exec_external(argc, argv, redirect_file, 0)) {
           restore_redirect(saved_fd);
         } else {
           restore_redirect(saved_fd);

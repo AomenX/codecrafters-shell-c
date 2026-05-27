@@ -8,7 +8,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int exec_external(int argc, char **argv, const char *redirect_file) {
+static int next_job_id = 1;
+
+int exec_external(int argc, char **argv, const char *redirect_file, int background) {
   if (argc == 0)
     return 0;
 
@@ -32,6 +34,9 @@ int exec_external(int argc, char **argv, const char *redirect_file) {
     execvp(argv[0], argv);
     perror("execvp failed");
     exit(1);
+  } else if (background) {
+    printf("[%d] %d\n", next_job_id++, (int)pid);
+    fflush(stdout);
   } else {
     waitpid(pid, NULL, 0);
   }
