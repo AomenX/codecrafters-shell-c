@@ -373,8 +373,14 @@ int main(int argc_unused, char *argv_unused[]) {
   
   char input[1024];
   char *argv[256];
+  int first_prompt = 1;
 
   while (1) {
+    if (!first_prompt) {
+      reap_done_jobs();
+    }
+    first_prompt = 0;
+
     fflush(stdout);
 
     char *line = readline("$ ");
@@ -452,7 +458,7 @@ int main(int argc_unused, char *argv_unused[]) {
     // Externals fork a child that applies redirect itself; restore parent fds first.
     restore_redirect(saved_fd);
 
-    if (exec_external(argc, argv, redirect_file, background)) {
+    if (exec_external(argc, argv, redirect_file, background, input)) {
       free_args(argc, argv);
       continue;
     }

@@ -139,7 +139,7 @@ static int cmd_cd(int argc, char **argv) {
 static void cmd_jobs(int argc, char **argv) {
   (void)argc;
   (void)argv;
-  // Behavior is implemented in later stages; this stage only requires registration.
+  list_jobs();
 }
 
 // declare name[=value] — declare a shell variable.
@@ -369,7 +369,7 @@ void execute_history_command(int index) {
         argc = extract_redirect(argc, argv, &redirect_file);
         
         int saved_fd = apply_redirect(redirect_file);
-        if (exec_external(argc, argv, redirect_file, 0)) {
+        if (exec_external(argc, argv, redirect_file, 0, NULL)) {
           restore_redirect(saved_fd);
         } else {
           restore_redirect(saved_fd);
