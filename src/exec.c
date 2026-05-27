@@ -20,7 +20,21 @@ typedef struct {
 
 static Job jobs[MAX_JOBS];
 static int num_jobs = 0;
-static int next_job_id = 1;
+
+// Returns the smallest positive integer not currently used as a job ID.
+static int alloc_job_id(void) {
+  for (int candidate = 1; ; candidate++) {
+    int in_use = 0;
+    for (int i = 0; i < num_jobs; i++) {
+      if (jobs[i].job_id == candidate) {
+        in_use = 1;
+        break;
+      }
+    }
+    if (!in_use)
+      return candidate;
+  }
+}
 
 static void add_job(int job_id, pid_t pid, const char *command) {
   if (num_jobs >= MAX_JOBS)
@@ -153,10 +167,10 @@ int exec_external(int argc, char **argv, const char *redirect_file, int backgrou
     perror("execvp failed");
     exit(1);
   } else if (background) {
-    add_job(next_job_id, pid, command_line);
-    printf("[%d] %d\n", next_job_id, (int)pid);
+    int jid = alloc_job_id();
+    add_job(jid, pid, command_line);
+    printf("[%d] %d\n", jid, (int)pid);
     fflush(stdout);
-    next_job_id++;
   } else {
     waitpid(pid, NULL, 0);
   }
