@@ -19,8 +19,9 @@ static int cmd_cd(int argc, char **argv);
 static void cmd_history(int argc, char **argv);
 static void cmd_complete(int argc, char **argv);
 static void cmd_declare(int argc, char **argv);
+static void cmd_jobs(int argc, char **argv);
 
-static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete", "declare"};
+static const char *builtins_names[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete", "declare", "jobs"};
 
 // Shell variable storage (separate from environment variables).
 #define MAX_SHELL_VARS 256
@@ -103,6 +104,9 @@ int exec_builtin(int argc, char **argv) {
   } else if (strcmp(cmd, "declare") == 0) {
     cmd_declare(argc, argv);
     return 1;
+  } else if (strcmp(cmd, "jobs") == 0) {
+    cmd_jobs(argc, argv);
+    return 1;
   }
   return 0;
 }
@@ -129,6 +133,13 @@ static int cmd_cd(int argc, char **argv) {
     setenv("PWD", cwd, 1);
 
   return 0;
+}
+
+// jobs — list all background jobs.
+static void cmd_jobs(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
+  // Behavior is implemented in later stages; this stage only requires registration.
 }
 
 // declare name[=value] — declare a shell variable.

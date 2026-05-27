@@ -133,7 +133,7 @@ void my_display_matches(char **matches, int num_matches, int max_length) {
 
 char *my_generator(const char *text, int state) {
   static int list_index, len;
-  const char *builtins[] = {"echo", "exit", "history", "complete", NULL};
+  const char *builtins[] = {"exit", "echo", "type", "pwd", "cd", "history", "complete", "declare", "jobs", NULL};
   static int search_phase; // 0 = builtins, 1 = PATH
   static char *path_copy = NULL;
   static char *path_token = NULL;
